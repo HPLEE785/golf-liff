@@ -2,581 +2,441 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>⛳ 高爾夫報名</title>
-<script src="https://static.line-scdn.net/liff/edge/versions/2.22.3/sdk.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --green: #2d6a4f;
-    --green-light: #f0fff4;
-    --green-btn: #2d7a4a;
-    --blue: #1a5276;
-    --blue-light: #eaf4ff;
-    --red: #c0392b;
-    --red-light: #ffebee;
-    --purple: #6c3483;
-    --gray: #f5f5f5;
-    --text: #222;
-    --sub: #666;
-    --border: #e0e0e0;
-    --radius: 12px;
-    --shadow: 0 2px 12px rgba(0,0,0,0.08);
-  }
-  body { font-family: -apple-system, "Segoe UI", sans-serif; background: #f0f2f5; color: var(--text); min-height: 100vh; }
-
-  /* Nav */
-  .nav { background: var(--green); color: #fff; padding: 14px 16px; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
-  .nav-title { font-size: 17px; font-weight: 700; flex: 1; }
-  .nav-sub { font-size: 12px; opacity: 0.8; }
-  .nav-refresh { background: rgba(255,255,255,0.2); border: none; color: #fff; border-radius: 8px; padding: 6px 10px; font-size: 16px; cursor: pointer; }
-
-  /* Tabs */
-  .tabs { display: flex; background: #fff; border-bottom: 2px solid var(--border); position: sticky; top: 52px; z-index: 99; }
-  .tab { flex: 1; padding: 12px 4px; text-align: center; font-size: 13px; color: var(--sub); border: none; background: none; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; }
-  .tab.active { color: var(--green); border-bottom-color: var(--green); font-weight: 700; }
-
-  /* Content */
-  .page { display: none; padding: 16px; max-width: 480px; margin: 0 auto; }
-  .page.active { display: block; }
-
-  /* Card */
-  .card { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 12px; overflow: hidden; }
-  .card-header { padding: 14px 16px 10px; border-bottom: 1px solid var(--border); }
-  .card-title { font-size: 15px; font-weight: 700; }
-  .card-sub { font-size: 12px; color: var(--sub); margin-top: 2px; }
-  .card-body { padding: 14px 16px; }
-
-  /* Date Card */
-  .date-card { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 14px; overflow: hidden; }
-  .date-header { padding: 12px 16px; display: flex; align-items: center; gap: 10px; }
-  .date-header.has-dinner { background: #fff0f0; border-left: 4px solid var(--red); }
-  .date-header.no-dinner { background: var(--green-light); border-left: 4px solid var(--green); }
-  .date-info { flex: 1; }
-  .date-main { font-size: 16px; font-weight: 700; }
-  .date-stats { font-size: 12px; color: var(--sub); margin-top: 3px; }
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-  .badge-registered { background: #e8f5e9; color: var(--green); }
-  .badge-waitlist { background: #fff3e0; color: #e65100; }
-  .badge-dinner { background: #ffebee; color: var(--red); }
-  .date-body { padding: 12px 16px; }
-
-  /* Buttons */
-  .btn { display: block; width: 100%; padding: 13px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.15s; text-align: center; }
-  .btn:active { transform: scale(0.97); }
-  .btn-primary { background: var(--green); color: #fff; }
-  .btn-danger { background: var(--red); color: #fff; }
-  .btn-secondary { background: var(--gray); color: var(--text); }
-  .btn-blue { background: var(--blue); color: #fff; }
-  .btn-purple { background: var(--purple); color: #fff; }
-  .btn-outline { background: #fff; color: var(--green); border: 2px solid var(--green); }
-  .btn + .btn { margin-top: 8px; }
-  .btn-row { display: flex; gap: 8px; }
-  .btn-row .btn { flex: 1; }
-
-  /* Dinner buttons */
-  .dinner-btns .btn { font-size: 13px; padding: 11px; }
-  .dinner-btns .btn + .btn { margin-top: 6px; }
-
-  /* Player list */
-  .player-list { }
-  .player-item { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid #f5f5f5; gap: 8px; }
-  .player-item:last-child { border-bottom: none; }
-  .player-num { width: 24px; height: 24px; background: var(--green); color: #fff; border-radius: 50%; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .player-num.waitlist { background: #e65100; }
-  .player-name { flex: 1; font-size: 14px; }
-  .player-tags { display: flex; gap: 4px; flex-wrap: wrap; }
-  .tag { font-size: 10px; padding: 1px 6px; border-radius: 10px; }
-  .tag-guest { background: #fff3e0; color: #e65100; }
-  .tag-dinner { background: #ffebee; color: var(--red); }
-  .tag-golf { background: #e8f5e9; color: var(--green); }
-  .tag-coupon { background: #f3e5f5; color: var(--purple); }
-
-  /* Member select */
-  .member-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .member-btn { padding: 11px 8px; background: #fff; border: 2px solid var(--border); border-radius: 10px; font-size: 14px; cursor: pointer; text-align: center; transition: all 0.15s; }
-  .member-btn:active { background: var(--green-light); border-color: var(--green); }
-  .member-btn.selected { background: var(--green-light); border-color: var(--green); color: var(--green); font-weight: 700; }
-
-  /* Toast */
-  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 12px 20px; border-radius: 24px; font-size: 14px; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
-  .toast.show { opacity: 1; }
-
-  /* Loading */
-  .loading { text-align: center; padding: 40px; color: var(--sub); font-size: 14px; }
-  .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--green); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* Empty */
-  .empty { text-align: center; padding: 40px 20px; color: var(--sub); }
-  .empty-icon { font-size: 48px; margin-bottom: 12px; }
-
-  /* Status */
-  .status-card { background: var(--green-light); border: 1px solid #b2dfdb; border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
-  .status-name { font-size: 18px; font-weight: 700; color: var(--green); }
-  .status-count { font-size: 13px; color: var(--sub); margin-top: 4px; }
-
-  /* Section title */
-  .section-title { font-size: 13px; font-weight: 700; color: var(--sub); text-transform: uppercase; letter-spacing: 0.5px; margin: 16px 0 8px; }
-
-  /* Input */
-  .input { width: 100%; padding: 12px 14px; border: 2px solid var(--border); border-radius: 10px; font-size: 15px; outline: none; }
-  .input:focus { border-color: var(--green); }
-
-  /* Back button */
-  .back-btn { display: flex; align-items: center; gap: 6px; color: var(--green); font-size: 14px; cursor: pointer; margin-bottom: 14px; font-weight: 600; }
-  .back-btn::before { content: "←"; font-size: 16px; }
-
-  /* Admin panel */
-  .admin-section { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 10px; }
-  .admin-row { padding: 14px 16px; display: flex; align-items: center; border-bottom: 1px solid var(--border); cursor: pointer; }
-  .admin-row:last-child { border-bottom: none; }
-  .admin-row-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; margin-right: 12px; flex-shrink: 0; }
-  .admin-row-text { flex: 1; }
-  .admin-row-title { font-size: 15px; font-weight: 600; }
-  .admin-row-sub { font-size: 12px; color: var(--sub); margin-top: 2px; }
-  .admin-row-arrow { color: var(--border); font-size: 18px; }
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --g1:#1b4332;--g2:#2d6a4f;--g3:#40916c;--g5:#d8f3dc;
+  --r1:#c0392b;--r5:#fdecea;--b1:#1565c0;--b5:#e3f2fd;
+  --p1:#6a1b9a;--p5:#f3e5f5;
+  --ink:#1a1a1a;--sub:#666;--muted:#999;
+  --border:#e8e8e8;--bg:#f4f6f4;--card:#fff;
+  --radius:14px;--rsm:10px;
+  --shadow:0 2px 16px rgba(0,0,0,.07);
+  --font:'Noto Sans TC',sans-serif;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:100vh}
+.nav{background:var(--g1);padding:14px 16px 12px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:200}
+.nav-title{flex:1;font-size:17px;font-weight:900;color:#fff;letter-spacing:.5px}
+.nav-refresh{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;padding:7px 11px;font-size:16px;cursor:pointer}
+.tabs{display:flex;background:#fff;border-bottom:1.5px solid var(--border);position:sticky;top:53px;z-index:190}
+.tab{flex:1;padding:11px 2px 10px;text-align:center;font-size:12px;font-weight:700;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;letter-spacing:.3px}
+.tab.active{color:var(--g2);border-bottom-color:var(--g2)}
+.page{display:none;padding:14px 14px 80px;max-width:520px;margin:0 auto}
+.page.active{display:block}
+.loading{text-align:center;padding:48px 20px;color:var(--sub)}
+.spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--g3);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty-icon{font-size:40px;margin-bottom:10px}
+.sec{font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:18px 0 8px 2px}
+.sec:first-child{margin-top:2px}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden}
+.card-body{padding:12px 14px}
+.ds{padding:11px 14px;display:flex;align-items:center;gap:10px}
+.ds.dn{background:#fff5f5;border-left:4px solid var(--r1)}
+.ds.pl{background:var(--g5);border-left:4px solid var(--g3)}
+.ds-info{flex:1}
+.ds-name{font-size:15px;font-weight:900}
+.ds-stat{font-size:11px;color:var(--sub);margin-top:2px}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700}
+.b-ok{background:var(--g5);color:var(--g2)}
+.b-full{background:#f5f5f5;color:var(--muted)}
+.pr{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid #f5f5f5;gap:8px;cursor:pointer}
+.pr:last-child{border-bottom:none}
+.pr:active{background:#f9f9f9;margin:0 -14px;padding:8px 14px}
+.pn{width:22px;height:22px;border-radius:50%;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.pn.r{background:var(--g2);color:#fff}
+.pn.w{background:#e65100;color:#fff}
+.pname{flex:1;font-size:14px;font-weight:500}
+.ptags{display:flex;gap:3px;flex-wrap:wrap}
+.tag{padding:2px 6px;border-radius:8px;font-size:10px;font-weight:700}
+.t-g{background:var(--g5);color:var(--g2)}
+.t-d{background:var(--r5);color:var(--r1)}
+.t-b{background:var(--b5);color:var(--b1)}
+.t-p{background:var(--p5);color:var(--p1)}
+.t-wl{background:#fff3e0;color:#e65100}
+.t-gs{background:#fff8e1;color:#f57f17}
+.edit-hint{font-size:10px;color:var(--muted);flex-shrink:0}
+.mg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:4px}
+.mb{padding:10px 4px;background:var(--card);border:1.5px solid var(--border);border-radius:var(--rsm);font-size:13px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s;color:var(--ink)}
+.mb:active,.mb.sel{background:var(--g5);border-color:var(--g3);color:var(--g1)}
+.btn{display:block;width:100%;padding:13px;border:none;border-radius:var(--rsm);font-size:14px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s;font-family:var(--font);letter-spacing:.3px}
+.btn:active{transform:scale(.97);opacity:.9}
+.btn+.btn{margin-top:7px}
+.bg{background:var(--g2);color:#fff}
+.br{background:var(--r1);color:#fff}
+.bb{background:var(--b1);color:#fff}
+.bp{background:var(--p1);color:#fff}
+.bm{background:#f0f0f0;color:var(--sub)}
+.brow{display:flex;gap:7px}
+.brow .btn{flex:1}
+.bsm{padding:9px;font-size:13px}
+.input{width:100%;padding:11px 14px;border:2px solid var(--border);border-radius:var(--rsm);font-size:15px;outline:none;font-family:var(--font);transition:border-color .2s}
+.input:focus{border-color:var(--g3)}
+.ilabel{font-size:12px;font-weight:700;color:var(--sub);margin-bottom:5px}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:flex-end;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:520px;padding:20px 18px 32px;max-height:85vh;overflow-y:auto}
+.modal-title{font-size:16px;font-weight:900;margin-bottom:4px}
+.modal-sub{font-size:12px;color:var(--sub);margin-bottom:16px}
+.modal-close{float:right;background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer;margin-top:-4px}
+.srow{display:flex;align-items:center;background:var(--card);border-radius:var(--rsm);margin-bottom:8px;overflow:hidden;box-shadow:var(--shadow)}
+.snum{width:36px;text-align:center;font-size:12px;font-weight:900;color:var(--muted);flex-shrink:0}
+.sinput{flex:1;padding:12px 8px;border:none;outline:none;font-size:14px;font-family:var(--font);font-weight:500}
+.sclear{padding:12px 12px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.85);color:#fff;padding:11px 20px;border-radius:24px;font-size:13px;font-weight:500;z-index:999;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+.dc .btn{font-size:13px;padding:11px}
 </style>
 </head>
 <body>
 
 <div class="nav">
-  <span style="font-size:22px">⛳</span>
+  <span style="font-size:22px;line-height:1">⛳</span>
   <div class="nav-title" id="nav-title">高爾夫報名</div>
-  <button class="nav-refresh" onclick="refreshCurrent()">🔄</button>
+  <button class="nav-refresh" onclick="refresh()">🔄</button>
 </div>
 
-<div class="tabs" id="tabs">
-  <button class="tab active" onclick="switchTab('register')">報名</button>
-  <button class="tab" onclick="switchTab('roster')">名單</button>
-  <button class="tab" onclick="switchTab('status')">我的</button>
-  <button class="tab" onclick="switchTab('help')">幫隊員</button>
-  <button class="tab" id="admin-tab" style="display:none" onclick="switchTab('admin')">管理</button>
+<div class="tabs">
+  <button class="tab active" data-tab="register" onclick="switchTab(this)">📋 報名</button>
+  <button class="tab" data-tab="roster" onclick="switchTab(this)">👥 名單</button>
+  <button class="tab" data-tab="settings" onclick="switchTab(this)">⚙️ 我的</button>
 </div>
 
-<!-- 報名頁 -->
 <div class="page active" id="page-register">
-  <div id="register-content"><div class="loading"><div class="spinner"></div>載入中...</div></div>
+  <div id="reg-content"><div class="loading"><div class="spinner"></div>載入中...</div></div>
 </div>
-
-<!-- 名單頁 -->
 <div class="page" id="page-roster">
   <div id="roster-content"><div class="loading"><div class="spinner"></div>載入中...</div></div>
 </div>
-
-<!-- 我的狀態 -->
-<div class="page" id="page-status">
-  <div id="status-content"><div class="loading"><div class="spinner"></div>載入中...</div></div>
+<div class="page" id="page-settings">
+  <div id="settings-content"></div>
 </div>
 
-<!-- 幫隊員 -->
-<div class="page" id="page-help">
-  <div id="help-content"><div class="loading"><div class="spinner"></div>載入中...</div></div>
+<div class="modal-bg" id="modal-bg" onclick="closeModal(event)">
+  <div class="modal" id="modal"><button class="modal-close" onclick="closeModal()">×</button><div id="modal-inner"></div></div>
 </div>
-
-<!-- 管理 -->
-<div class="page" id="page-admin">
-  <div id="admin-content"><div class="loading"><div class="spinner"></div>載入中...</div></div>
-</div>
-
 <div class="toast" id="toast"></div>
 
 <script>
-const LIFF_ID = "2009411318-rdNGpvNz"; // ← 設定 LIFF ID
-const API_BASE = "https://golf-linebot-4wqe.onrender.com"; // ← 後端網址
+const API="https://golf-linebot-4wqe.onrender.com";
+const WD=["一","二","三","四","五","六","日"];
 
-let accessToken = null;
-let myProfile = null;
-let scheduleData = null;
-let currentTab = "register";
+// Storage
+const S={
+  get(k){try{return JSON.parse(localStorage.getItem(k))}catch{return null}},
+  set(k,v){localStorage.setItem(k,JSON.stringify(v))}
+};
+const getMyName=()=>S.get("myName")||"";
+const getTeam=()=>S.get("myTeam")||Array(7).fill("");
+const getGuests=()=>S.get("myGuests")||Array(11).fill("");
 
-// ===== 初始化 =====
-async function init() {
-  try {
-    await liff.init({ liffId: LIFF_ID });
-    if (!liff.isLoggedIn()) { liff.login(); return; }
-    accessToken = liff.getAccessToken();
-    myProfile = await apiFetch("/api/me");
-    if (myProfile.is_admin) {
-      document.getElementById("admin-tab").style.display = "";
-    }
-    document.getElementById("nav-title").textContent =
-      myProfile.member_name ? `⛳ ${myProfile.member_name}` : "⛳ 高爾夫報名";
-    await loadRegister();
-  } catch(e) {
-    console.error(e);
-    showToast("初始化失敗：" + e.message);
-  }
+let scheduleData=[],rosterData=[],allMembers=[];
+
+function wdn(ds){const d=new Date(ds+"T00:00:00");return WD[d.getDay()===0?6:d.getDay()-1]}
+function mmdd(ds){const[,m,d]=ds.split("-");return m+"/"+d}
+
+function switchTab(el){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  el.classList.add("active");
+  const tab=el.dataset.tab;
+  document.getElementById("page-"+tab).classList.add("active");
+  if(tab==="register")loadRegister();
+  else if(tab==="roster")loadRoster();
+  else if(tab==="settings")renderSettings();
 }
 
-// ===== API =====
-async function apiFetch(path, opts = {}) {
-  const res = await fetch(API_BASE + path, {
-    ...opts,
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${accessToken}`,
-      ...(opts.headers || {})
+function refresh(){
+  scheduleData=[];rosterData=[];
+  const t=document.querySelector(".tab.active").dataset.tab;
+  if(t==="register")loadRegister();
+  else if(t==="roster")loadRoster();
+}
+
+function toast(msg,ms=2500){
+  const el=document.getElementById("toast");
+  el.textContent=msg;el.classList.add("show");
+  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove("show"),ms);
+}
+
+async function apiFetch(path,opts={}){
+  const r=await fetch(API+path,{...opts,headers:{"Content-Type":"application/json",...(opts.headers||{})}});
+  if(!r.ok)throw new Error("HTTP "+r.status);
+  return r.json();
+}
+
+function dtags(dtype){
+  if(dtype==="both")return'<span class="tag t-b">打球+餐</span>';
+  if(dtype==="golf_only")return'<span class="tag t-g">打球</span>';
+  if(dtype==="dinner_only")return'<span class="tag t-d">餐敘</span>';
+  return"";
+}
+
+// ── 載入報名頁 ──
+async function loadRegister(){
+  const el=document.getElementById("reg-content");
+  el.innerHTML='<div class="loading"><div class="spinner"></div>載入中...</div>';
+  try{
+    const[s,r,m]=await Promise.all([
+      apiFetch("/api/schedule-public"),
+      apiFetch("/api/registrations-public"),
+      apiFetch("/api/members-public")
+    ]);
+    scheduleData=s.dates||[];
+    rosterData=r.dates||[];
+    allMembers=m.members||[];
+    renderRegister();
+  }catch(e){el.innerHTML='<div class="empty"><div class="empty-icon">⚠️</div>載入失敗，請重試</div>'}
+}
+
+function renderRegister(){
+  const el=document.getElementById("reg-content");
+  const myName=getMyName();
+  const team=getTeam().filter(Boolean);
+  const guests=getGuests().filter(Boolean);
+  const allMine=[myName,...team].filter(Boolean);
+  const now=new Date();
+  const mon=new Date(now);mon.setDate(now.getDate()-(now.getDay()===0?6:now.getDay()-1));mon.setHours(0,0,0,0);
+  const guestOk=now>=mon;
+  let html="";
+
+  // 已報名狀況
+  html+='<div class="sec">已報名狀況</div>';
+  let anyReg=false;
+  for(const d of rosterData){
+    const myRegs=d.players.filter(p=>allMine.includes(p.name)&&!p.is_waitlist&&!p.is_guest);
+    const myGs=d.players.filter(p=>guests.includes(p.name)&&p.is_guest&&!p.is_waitlist);
+    const combined=[...myRegs,...myGs];
+    if(!combined.length)continue;
+    anyReg=true;
+    html+=`<div class="card">
+    <div class="ds ${d.has_dinner?'dn':'pl'}">
+      <div class="ds-info">
+        <div class="ds-name">${mmdd(d.play_date)} 星期${wdn(d.play_date)}${d.has_dinner?' 🍽️':''}</div>
+        <div class="ds-stat">全場已報名 ${d.players.filter(p=>!p.is_waitlist).length} 人</div>
+      </div>
+    </div>
+    <div class="card-body"><div class="player-list">
+    ${combined.map((p,i)=>`<div class="pr" onclick="showEditModal('${p.name}','${d.play_date}',${p.is_guest},'${p.reg_id||''}','${p.dinner_type||''}',${d.has_dinner})">
+      <div class="pn r">${i+1}</div>
+      <div class="pname">${p.name}${p.is_guest?'<span class="tag t-gs" style="margin-left:4px">來賓</span>':''}</div>
+      <div class="ptags">${dtags(p.dinner_type)}</div>
+      <div class="edit-hint">✎</div>
+    </div>`).join("")}
+    </div></div></div>`;
+  }
+  if(!anyReg)html+='<div class="card"><div class="card-body" style="color:var(--muted);font-size:13px;text-align:center;padding:18px">尚未報名任何場次</div></div>';
+
+  // 常用隊員
+  html+='<div class="sec">常用隊員</div>';
+  if(team.length){
+    html+='<div class="card"><div class="card-body"><div class="mg">';
+    for(const n of team)html+=`<button class="mb" onclick="showRegModal('${n}',false)">${n}</button>`;
+    html+='</div></div></div>';
+  }else{
+    html+='<div class="card"><div class="card-body" style="color:var(--muted);font-size:13px;text-align:center;padding:16px">請至「⚙️ 我的」設定常用隊員</div></div>';
+  }
+
+  // 常用來賓
+  html+='<div class="sec">常用來賓</div>';
+  if(!guestOk){
+    html+='<div class="card"><div class="card-body" style="color:var(--muted);font-size:12px;text-align:center;padding:16px">週一 00:00 後開放來賓報名</div></div>';
+  }else if(guests.length){
+    html+='<div class="card"><div class="card-body"><div class="mg">';
+    for(const n of guests)html+=`<button class="mb" onclick="showRegModal('${n}',true)">${n}</button>`;
+    html+='</div></div></div>';
+  }else{
+    html+='<div class="card"><div class="card-body" style="color:var(--muted);font-size:13px;text-align:center;padding:16px">請至「⚙️ 我的」設定常用來賓</div></div>';
+  }
+
+  el.innerHTML=html;
+}
+
+// ── 報名 Modal ──
+function showRegModal(name,isGuest){
+  if(!scheduleData.length){toast("⚠️ 請先載入場次");return}
+  let html=`<div class="modal-title">${name}</div>
+  <div class="modal-sub">${isGuest?'來賓':'隊員'} · 選擇場次</div>`;
+  for(const d of scheduleData){
+    const wd=wdn(d.play_date);
+    const roster=rosterData.find(r=>r.play_date===d.play_date);
+    const alreadyReg=roster&&roster.players.some(p=>p.name===name&&!p.is_waitlist&&(isGuest?p.is_guest:!p.is_guest));
+    const remain=Math.max(0,(d.max_players||0)-d.registered);
+    html+=`<div class="card" style="margin-bottom:10px">
+    <div class="ds ${d.has_dinner?'dn':'pl'}">
+      <div class="ds-info">
+        <div class="ds-name">${mmdd(d.play_date)} 星期${wd}${d.has_dinner?' 🍽️':''}</div>
+        <div class="ds-stat">已報名 ${d.registered} 人 | 剩 ${remain} 位</div>
+      </div>
+      ${alreadyReg?'<span class="badge b-ok">✓ 已報名</span>':''}
+    </div>
+    <div class="card-body">`;
+    if(alreadyReg){
+      const reg=roster.players.find(p=>p.name===name&&(isGuest?p.is_guest:!p.is_guest));
+      html+=`<button class="btn br bsm" onclick="doCancel('${name}','${d.play_date}',${isGuest},'${reg?.reg_id||''}');closeModal()">✖ 取消報名</button>`;
+    }else if(d.has_dinner){
+      html+=`<div class="dc">
+        <button class="btn bb bsm" onclick="doReg('${name}','${d.play_date}','both',${isGuest});closeModal()">⛳🍽️ 打球＋餐敘</button>
+        <button class="btn bg bsm" onclick="doReg('${name}','${d.play_date}','golf_only',${isGuest});closeModal()">⛳ 打球不餐敘</button>
+        <button class="btn bp bsm" onclick="doReg('${name}','${d.play_date}','dinner_only',${isGuest});closeModal()">🍽️ 餐敘不打球</button>
+      </div>`;
+    }else{
+      html+=`<button class="btn bg bsm" onclick="doReg('${name}','${d.play_date}','',${isGuest});closeModal()">✅ 報名</button>`;
     }
+    html+='</div></div>';
+  }
+  openModal(html);
+}
+
+function showEditModal(name,playDate,isGuest,regId,dinnerType,hasDinner){
+  let html=`<div class="modal-title">${name}</div>
+  <div class="modal-sub">${mmdd(playDate)} 星期${wdn(playDate)} 已報名</div>
+  <div style="margin-bottom:12px">${dtags(dinnerType)||'<span class="tag t-g">打球</span>'}</div>`;
+  if(hasDinner&&!isGuest){
+    html+=`<div class="sec" style="margin-top:0">修改餐敘選項</div>
+    <div class="dc">
+      <button class="btn bb bsm" onclick="doReg('${name}','${playDate}','both',${isGuest});closeModal()">⛳🍽️ 打球＋餐敘</button>
+      <button class="btn bg bsm" onclick="doReg('${name}','${playDate}','golf_only',${isGuest});closeModal()">⛳ 打球不餐敘</button>
+      <button class="btn bp bsm" onclick="doReg('${name}','${playDate}','dinner_only',${isGuest});closeModal()">🍽️ 餐敘不打球</button>
+    </div><div style="margin-top:10px">`;
+  }else html+='<div>';
+  html+=`<button class="btn br bsm" onclick="doCancel('${name}','${playDate}',${isGuest},'${regId}');closeModal()">✖ 取消報名</button></div>`;
+  openModal(html);
+}
+
+async function doReg(name,playDate,dinnerType,isGuest){
+  const myName=getMyName();
+  toast("報名中...");
+  try{
+    const res=await apiFetch("/api/register-by-name",{method:"POST",body:JSON.stringify({
+      name,play_date:playDate,dinner_type:dinnerType,
+      operator:myName||name,is_guest:isGuest,invited_by:myName||""
+    })});
+    if(res.status==="success")toast(res.info?.is_waitlist?`✅ ${name} 加入候補`:`✅ ${name} 報名成功`);
+    else if(res.status==="already_registered")toast(`⚠️ ${name} 已報名此場次`);
+    else if(res.status==="member_not_found")toast(`⚠️ 找不到成員「${name}」`);
+    else toast("⚠️ "+res.status);
+    await reloadData();renderRegister();
+  }catch(e){toast("❌ 報名失敗")}
+}
+
+async function doCancel(name,playDate,isGuest,regId){
+  const myName=getMyName();
+  toast("取消中...");
+  try{
+    const res=await apiFetch("/api/cancel-by-name",{method:"POST",body:JSON.stringify({
+      name,play_date:playDate,is_guest:isGuest,reg_id:regId,operator:myName||name
+    })});
+    toast(res.status==="cancelled"||res.status==="success"?`✅ ${name} 取消成功`:"⚠️ "+res.status);
+    await reloadData();renderRegister();
+  }catch(e){toast("❌ 取消失敗")}
+}
+
+async function reloadData(){
+  const[s,r]=await Promise.all([apiFetch("/api/schedule-public"),apiFetch("/api/registrations-public")]);
+  scheduleData=s.dates||[];rosterData=r.dates||[];
+}
+
+// ── 名單頁 ──
+async function loadRoster(){
+  const el=document.getElementById("roster-content");
+  el.innerHTML='<div class="loading"><div class="spinner"></div>載入中...</div>';
+  try{
+    const r=await apiFetch("/api/registrations-public");
+    rosterData=r.dates||[];renderRoster();
+  }catch(e){el.innerHTML='<div class="empty"><div class="empty-icon">⚠️</div>載入失敗</div>'}
+}
+
+function renderRoster(){
+  const el=document.getElementById("roster-content");
+  const nonempty=rosterData.filter(d=>d.players.length>0);
+  if(!nonempty.length){el.innerHTML='<div class="empty"><div class="empty-icon">📋</div>本週尚無報名</div>';return}
+  let html="";
+  for(const d of nonempty){
+    const reg=d.players.filter(p=>!p.is_waitlist);
+    const wl=d.players.filter(p=>p.is_waitlist);
+    html+=`<div class="card" style="margin-bottom:12px">
+    <div class="ds ${d.has_dinner?'dn':'pl'}">
+      <div class="ds-info">
+        <div class="ds-name">${mmdd(d.play_date)} 星期${wdn(d.play_date)}${d.has_dinner?' 🍽️':''}</div>
+        <div class="ds-stat">報名 ${reg.length} 人${wl.length?" | 候補 "+wl.length+" 人":""}</div>
+      </div>
+    </div>
+    <div class="card-body"><div class="player-list">
+    ${reg.map((p,i)=>`<div class="pr">
+      <div class="pn r">${i+1}</div>
+      <div class="pname">${p.name}${p.is_guest?'<span class="tag t-gs" style="margin-left:4px">來賓</span>':''}</div>
+      <div class="ptags">${dtags(p.dinner_type)}</div>
+    </div>`).join("")}
+    ${wl.length?'<div style="font-size:11px;font-weight:900;color:var(--muted);margin:8px 0 4px">候補</div>':''}
+    ${wl.map((p,i)=>`<div class="pr">
+      <div class="pn w">W${i+1}</div>
+      <div class="pname">${p.name}</div>
+      <div class="ptags"><span class="tag t-wl">候補</span></div>
+    </div>`).join("")}
+    </div></div></div>`;
+  }
+  el.innerHTML=html;
+}
+
+// ── 設定頁 ──
+function renderSettings(){
+  const myName=getMyName(),team=getTeam(),guests=getGuests();
+  let html=`
+  <div class="sec">我自己</div>
+  <div class="card"><div class="card-body">
+    <div class="ilabel">我的名字（必填，用於報名）</div>
+    <input class="input" id="s-myname" value="${myName}" placeholder="輸入你的正式姓名" onchange="saveMyName(this.value)">
+  </div></div>
+  <div class="sec">常用隊員（最多7人）</div>`;
+  team.forEach((n,i)=>{
+    html+=`<div class="srow">
+      <div class="snum">${i+1}</div>
+      <input class="sinput" placeholder="隊員${i+1}姓名" value="${n}" onchange="saveTeam(${i},this.value)" list="ml">
+      ${n?`<button class="sclear" onclick="clearTeam(${i})">×</button>`:''}
+    </div>`;
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
-}
-
-// ===== Tab 切換 =====
-function switchTab(tab) {
-  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-  event.target.classList.add("active");
-  document.getElementById(`page-${tab}`).classList.add("active");
-  currentTab = tab;
-  if (tab === "register" && !scheduleData) loadRegister();
-  else if (tab === "roster") loadRoster();
-  else if (tab === "status") loadStatus();
-  else if (tab === "help") loadHelp();
-  else if (tab === "admin") loadAdmin();
-}
-
-function refreshCurrent() {
-  scheduleData = null;
-  if (currentTab === "register") loadRegister();
-  else if (currentTab === "roster") loadRoster();
-  else if (currentTab === "status") loadStatus();
-  else if (currentTab === "help") loadHelp();
-}
-
-// ===== Toast =====
-function showToast(msg, duration = 2500) {
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), duration);
-}
-
-// ===== 報名頁 =====
-async function loadRegister() {
-  const el = document.getElementById("register-content");
-  el.innerHTML = '<div class="loading"><div class="spinner"></div>載入中...</div>';
-  try {
-    const data = await apiFetch("/api/schedule");
-    scheduleData = data;
-    renderRegister(data.dates);
-  } catch(e) { el.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div>載入失敗</div>`; }
-}
-
-function renderRegister(dates) {
-  const el = document.getElementById("register-content");
-  if (!dates || dates.length === 0) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">🏌️</div><div>本週尚無開放場次</div></div>';
-    return;
+  html+=`<datalist id="ml">${allMembers.map(m=>`<option value="${m}">`).join('')}</datalist>
+  <div class="sec">常用來賓（最多11人）</div>`;
+  guests.forEach((n,i)=>{
+    html+=`<div class="srow">
+      <div class="snum">${i+1}</div>
+      <input class="sinput" placeholder="來賓${i+1}姓名" value="${n}" onchange="saveGuest(${i},this.value)">
+      ${n?`<button class="sclear" onclick="clearGuest(${i})">×</button>`:''}
+    </div>`;
+  });
+  html+='<div style="height:24px"></div>';
+  document.getElementById("settings-content").innerHTML=html;
+  if(myName)document.getElementById("nav-title").textContent="⛳ "+myName;
+  if(!allMembers.length){
+    apiFetch("/api/members-public").then(r=>{
+      allMembers=r.members||[];
+      const dl=document.getElementById("ml");
+      if(dl)dl.innerHTML=allMembers.map(m=>`<option value="${m}">`).join('');
+    }).catch(()=>{});
   }
-  el.innerHTML = dates.map(d => renderDateCard(d)).join("");
 }
 
-function renderDateCard(d) {
-  const isReg = d.is_registered;
-  const wdNames = ["一","二","三","四","五","六","日"];
-  const wdName = wdNames[d.weekday] || "";
-  const dinnerLabel = d.has_dinner ? "　含餐敘 🍽️" : "";
-  const statsText = d.has_dinner
-    ? `已報名 ${d.registered} 人（用餐 ${d.dinner_count} 人）｜剩 ${d.remaining} 位`
-    : `已報名 ${d.registered} 人｜剩 ${d.remaining} 位`;
+function saveMyName(v){S.set("myName",v.trim());if(v.trim())document.getElementById("nav-title").textContent="⛳ "+v.trim();toast("✅ 已儲存")}
+function saveTeam(i,v){const t=getTeam();t[i]=v.trim();S.set("myTeam",t);toast("✅ 已儲存");renderSettings()}
+function clearTeam(i){const t=getTeam();t[i]="";S.set("myTeam",t);renderSettings()}
+function saveGuest(i,v){const g=getGuests();g[i]=v.trim();S.set("myGuests",g);toast("✅ 已儲存");renderSettings()}
+function clearGuest(i){const g=getGuests();g[i]="";S.set("myGuests",g);renderSettings()}
 
-  let btns = "";
-  if (isReg) {
-    btns = `<button class="btn btn-danger" onclick="doCancel('${d.full_date}')">✖ 取消報名 ${d.date_str} 星期${wdName}</button>`;
-  } else if (d.has_dinner) {
-    btns = `<div class="dinner-btns">
-      <button class="btn btn-blue" onclick="doRegister('${d.full_date}','both')">⛳🍽️ 打球 + 餐敘</button>
-      <button class="btn btn-primary" onclick="doRegister('${d.full_date}','golf_only')">⛳ 打球不餐敘</button>
-      <button class="btn btn-purple" onclick="doRegister('${d.full_date}','dinner_only')">🍽️ 餐敘不打球</button>
-    </div>`;
-  } else {
-    btns = `<button class="btn btn-primary" onclick="doRegister('${d.full_date}','')">✅ 報名 ${d.date_str} 星期${wdName}</button>`;
-  }
+function openModal(html){document.getElementById("modal-inner").innerHTML=html;document.getElementById("modal-bg").classList.add("open")}
+function closeModal(e){if(!e||e.target===document.getElementById("modal-bg"))document.getElementById("modal-bg").classList.remove("open")}
 
-  return `<div class="date-card">
-    <div class="date-header ${d.has_dinner ? 'has-dinner' : 'no-dinner'}">
-      <div class="date-info">
-        <div class="date-main">${d.date_str} 星期${wdName}${dinnerLabel}</div>
-        <div class="date-stats">${statsText}</div>
-      </div>
-      ${isReg ? '<span class="badge badge-registered">✓ 已報名</span>' : ''}
-    </div>
-    <div class="date-body">${btns}</div>
-  </div>`;
-}
-
-async function doRegister(date, dinnerType) {
-  try {
-    showToast("報名中...");
-    const res = await apiFetch("/api/register", {
-      method: "POST", body: JSON.stringify({ play_date: date, dinner_type: dinnerType })
-    });
-    if (res.status === "success") {
-      const info = res.info;
-      showToast(info.is_waitlist ? `✅ 已加入候補 #${info.waitlist_num}` : `✅ 報名成功！剩 ${info.remaining} 位`);
-    } else if (res.status === "already_registered") {
-      showToast("⚠️ 您已報名此場次");
-    } else {
-      showToast("⚠️ " + res.status);
-    }
-    await loadRegister();
-  } catch(e) { showToast("❌ 報名失敗"); }
-}
-
-async function doCancel(date) {
-  if (!confirm("確定要取消報名嗎？")) return;
-  try {
-    showToast("取消中...");
-    const res = await apiFetch("/api/cancel", {
-      method: "POST", body: JSON.stringify({ play_date: date })
-    });
-    showToast(res.status === "success" || res.status === "cancelled" ? "✅ 已取消報名" : "⚠️ " + res.status);
-    await loadRegister();
-  } catch(e) { showToast("❌ 取消失敗"); }
-}
-
-// ===== 名單頁 =====
-async function loadRoster() {
-  const el = document.getElementById("roster-content");
-  el.innerHTML = '<div class="loading"><div class="spinner"></div>載入中...</div>';
-  try {
-    const data = await apiFetch("/api/registrations");
-    renderRoster(data.dates);
-  } catch(e) { el.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div>載入失敗</div>`; }
-}
-
-function renderRoster(dates) {
-  const el = document.getElementById("roster-content");
-  if (!dates || dates.every(d => d.players.length === 0)) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div>本週尚無報名</div></div>';
-    return;
-  }
-  const wdNames = ["一","二","三","四","五","六","日"];
-  el.innerHTML = dates.filter(d => d.players.length > 0).map(d => {
-    const dt = new Date(d.date + "T00:00:00");
-    const wd = wdNames[dt.getDay() === 0 ? 6 : dt.getDay() - 1];
-    const mm = String(dt.getMonth()+1).padStart(2,"0");
-    const dd = String(dt.getDate()).padStart(2,"0");
-    const regular = d.players.filter(p => !p.is_waitlist);
-    const waitlist = d.players.filter(p => p.is_waitlist);
-    const renderPlayer = (p, i, wl) => {
-      const tags = [];
-      if (p.is_guest) tags.push(`<span class="tag tag-guest">來賓</span>`);
-      if (p.dinner_type === "both") tags.push(`<span class="tag tag-dinner">打球+餐</span>`);
-      else if (p.dinner_type === "golf_only") tags.push(`<span class="tag tag-golf">打球</span>`);
-      else if (p.dinner_type === "dinner_only") tags.push(`<span class="tag tag-dinner">餐敘</span>`);
-      if (p.needs_coupon) tags.push(`<span class="tag tag-coupon">需券</span>`);
-      return `<div class="player-item">
-        <div class="player-num ${wl ? 'waitlist' : ''}">${wl ? 'W' : i}</div>
-        <div class="player-name">${p.name}</div>
-        <div class="player-tags">${tags.join("")}</div>
-      </div>`;
-    };
-    return `<div class="card">
-      <div class="card-header">
-        <div class="card-title">${mm}/${dd} 星期${wd}</div>
-        <div class="card-sub">報名 ${regular.length} 人${waitlist.length > 0 ? `　候補 ${waitlist.length} 人` : ""}</div>
-      </div>
-      <div class="card-body">
-        <div class="player-list">
-          ${regular.map((p,i) => renderPlayer(p, i+1, false)).join("")}
-          ${waitlist.length > 0 ? `<div style="margin-top:8px;font-size:12px;color:var(--sub);font-weight:700">候補名單</div>` + waitlist.map((p,i) => renderPlayer(p, i+1, true)).join("") : ""}
-        </div>
-      </div>
-    </div>`;
-  }).join("");
-}
-
-// ===== 我的狀態 =====
-async function loadStatus() {
-  const el = document.getElementById("status-content");
-  el.innerHTML = '<div class="loading"><div class="spinner"></div>載入中...</div>';
-  try {
-    const [status, sched] = await Promise.all([
-      apiFetch("/api/my-status"),
-      apiFetch("/api/schedule")
-    ]);
-    renderStatus(status, sched.dates);
-  } catch(e) { el.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div>載入失敗</div>`; }
-}
-
-function renderStatus(status, dates) {
-  const el = document.getElementById("status-content");
-  const name = myProfile?.member_name || myProfile?.display_name || "";
-  const wdNames = ["一","二","三","四","五","六","日"];
-  const myDates = status.registrations || [];
-
-  const myCards = myDates.map(r => {
-    const d = dates?.find(d => d.full_date === r.date);
-    const wd = wdNames[r.weekday];
-    const mm_dd = r.date ? r.date.slice(5).replace("-","/") : "";
-    let dinnerText = "";
-    if (r.dinner_type === "both") dinnerText = "　打球+餐敘";
-    else if (r.dinner_type === "golf_only") dinnerText = "　打球不餐敘";
-    else if (r.dinner_type === "dinner_only") dinnerText = "　餐敘不打球";
-    return `<div class="date-card">
-      <div class="date-header no-dinner">
-        <div class="date-info">
-          <div class="date-main">${mm_dd} 星期${wd}${dinnerText}</div>
-          <div class="date-stats">${r.is_waitlist ? "⏳ 候補中" : "✅ 已報名"}</div>
-        </div>
-        <span class="badge ${r.is_waitlist ? 'badge-waitlist' : 'badge-registered'}">${r.is_waitlist ? "候補" : "確認"}</span>
-      </div>
-      <div class="date-body">
-        <button class="btn btn-danger" onclick="doCancel('${r.date}')">✖ 取消報名</button>
-      </div>
-    </div>`;
-  }).join("");
-
-  el.innerHTML = `
-    <div class="status-card">
-      <div class="status-name">${name}</div>
-      <div class="status-count">本季已報名 ${status.season_count} 場</div>
-    </div>
-    ${myDates.length === 0
-      ? '<div class="empty"><div class="empty-icon">🏌️</div><div>本週尚未報名</div></div>'
-      : myCards}
-  `;
-}
-
-// ===== 幫隊員 =====
-let helpMembers = [];
-let helpSelected = null;
-
-async function loadHelp() {
-  const el = document.getElementById("help-content");
-  el.innerHTML = '<div class="loading"><div class="spinner"></div>載入中...</div>';
-  try {
-    const [mems, sched] = await Promise.all([
-      apiFetch("/api/members"),
-      apiFetch("/api/schedule")
-    ]);
-    helpMembers = mems.members;
-    helpSelected = null;
-    renderHelpMemberSelect(mems.members, sched.dates);
-  } catch(e) { el.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div>載入失敗</div>`; }
-}
-
-function renderHelpMemberSelect(members, dates) {
-  const el = document.getElementById("help-content");
-  const grid = members.map(m =>
-    `<div class="member-btn" onclick="selectHelpMember('${m.id}','${m.name}', ${JSON.stringify(dates).replace(/"/g,'&quot;')})">${m.name}</div>`
-  ).join("");
-  el.innerHTML = `
-    <div class="section-title">選擇要幫忙的成員</div>
-    <div class="member-grid">${grid}</div>
-  `;
-}
-
-function selectHelpMember(memberId, memberName, dates) {
-  helpSelected = { id: memberId, name: memberName };
-  const el = document.getElementById("help-content");
-  const wdNames = ["一","二","三","四","五","六","日"];
-
-  const dateCards = dates.map(d => {
-    const wd = wdNames[d.weekday];
-    if (d.has_dinner) {
-      return `<div class="date-card">
-        <div class="date-header has-dinner">
-          <div class="date-info">
-            <div class="date-main">${d.date_str} 星期${wd}　含餐敘 🍽️</div>
-            <div class="date-stats">已報名 ${d.registered} 人｜剩 ${d.remaining} 位</div>
-          </div>
-        </div>
-        <div class="date-body dinner-btns">
-          <button class="btn btn-blue" onclick="doRegisterFor('${memberId}','${memberName}','${d.full_date}','both')">⛳🍽️ 打球+餐敘</button>
-          <button class="btn btn-primary" onclick="doRegisterFor('${memberId}','${memberName}','${d.full_date}','golf_only')">⛳ 打球不餐敘</button>
-          <button class="btn btn-purple" onclick="doRegisterFor('${memberId}','${memberName}','${d.full_date}','dinner_only')">🍽️ 餐敘不打球</button>
-          <button class="btn btn-danger" onclick="doCancelFor('${memberId}','${memberName}','${d.full_date}')">✖ 取消報名</button>
-        </div>
-      </div>`;
-    }
-    return `<div class="date-card">
-      <div class="date-header no-dinner">
-        <div class="date-info">
-          <div class="date-main">${d.date_str} 星期${wd}</div>
-          <div class="date-stats">已報名 ${d.registered} 人｜剩 ${d.remaining} 位</div>
-        </div>
-      </div>
-      <div class="date-body">
-        <div class="btn-row">
-          <button class="btn btn-primary" onclick="doRegisterFor('${memberId}','${memberName}','${d.full_date}','')">✅ 報名</button>
-          <button class="btn btn-danger" onclick="doCancelFor('${memberId}','${memberName}','${d.full_date}')">✖ 取消</button>
-        </div>
-      </div>
-    </div>`;
-  }).join("");
-
-  el.innerHTML = `
-    <div class="back-btn" onclick="loadHelp()">返回成員選擇</div>
-    <div class="section-title">為 ${memberName} 選擇場次</div>
-    ${dates.length === 0 ? '<div class="empty"><div class="empty-icon">🏌️</div><div>本週尚無開放場次</div></div>' : dateCards}
-  `;
-}
-
-async function doRegisterFor(memberId, memberName, date, dinnerType) {
-  try {
-    showToast(`幫 ${memberName} 報名中...`);
-    const res = await apiFetch("/api/register-for", {
-      method: "POST", body: JSON.stringify({ member_id: memberId, play_date: date, dinner_type: dinnerType })
-    });
-    if (res.status === "success") showToast(`✅ 已幫 ${memberName} 報名`);
-    else if (res.status === "already_registered") showToast(`⚠️ ${memberName} 已報名此場次`);
-    else showToast("⚠️ " + res.status);
-    await loadHelp();
-  } catch(e) { showToast("❌ 操作失敗"); }
-}
-
-async function doCancelFor(memberId, memberName, date) {
-  if (!confirm(`確定要取消 ${memberName} 的報名嗎？`)) return;
-  try {
-    showToast(`取消 ${memberName} 報名中...`);
-    const res = await apiFetch("/api/cancel-for", {
-      method: "POST", body: JSON.stringify({ member_id: memberId, play_date: date })
-    });
-    showToast(res.status === "success" || res.status === "cancelled" ? `✅ 已取消 ${memberName} 的報名` : "⚠️ " + res.status);
-    await loadHelp();
-  } catch(e) { showToast("❌ 操作失敗"); }
-}
-
-// ===== 管理 =====
-function loadAdmin() {
-  const el = document.getElementById("admin-content");
-  el.innerHTML = `
-    <div class="section-title">管理功能</div>
-    <div class="admin-section">
-      <div class="admin-row" onclick="showToast('請使用 Line 對話操作設定球敘')">
-        <div class="admin-row-icon" style="background:#e8f5e9">⛳</div>
-        <div class="admin-row-text">
-          <div class="admin-row-title">設定與取消球敘</div>
-          <div class="admin-row-sub">請使用 Line Bot 對話操作</div>
-        </div>
-        <div class="admin-row-arrow">›</div>
-      </div>
-      <div class="admin-row" onclick="showToast('請使用 Line 對話操作成員管理')">
-        <div class="admin-row-icon" style="background:#eaf4ff">👥</div>
-        <div class="admin-row-text">
-          <div class="admin-row-title">新增與刪除修改成員</div>
-          <div class="admin-row-sub">請使用 Line Bot 對話操作</div>
-        </div>
-        <div class="admin-row-arrow">›</div>
-      </div>
-      <div class="admin-row" onclick="showToast('請使用 Line 對話操作管理者設定')">
-        <div class="admin-row-icon" style="background:#f3e5f5">👑</div>
-        <div class="admin-row-text">
-          <div class="admin-row-title">管理者設定</div>
-          <div class="admin-row-sub">請使用 Line Bot 對話操作</div>
-        </div>
-        <div class="admin-row-arrow">›</div>
-      </div>
-    </div>
-    <p style="font-size:12px;color:var(--sub);text-align:center;margin-top:12px">複雜管理功能請在 Line 對話中操作</p>
-  `;
-}
-
-init();
+// 初始化
+(async()=>{
+  const myName=getMyName();
+  if(myName)document.getElementById("nav-title").textContent="⛳ "+myName;
+  else setTimeout(()=>toast("💡 請先至「⚙️ 我的」設定你的名字",4000),800);
+  await loadRegister();
+})();
 </script>
 </body>
 </html>

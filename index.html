@@ -149,6 +149,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
 <div class="nav">
   <span style="font-size:22px;line-height:1">⛳</span>
   <div class="nav-title" id="nav-title">高爾夫報名</div>
+  <button class="nav-refresh" onclick="liff.closeWindow?liff.closeWindow():window.close()" style="margin-right:4px">✕ 離開</button>
   <button class="nav-refresh" onclick="refresh()">🔄</button>
 </div>
 <div class="tabs" id="main-tabs">
@@ -309,6 +310,7 @@ function renderRegister(){
     <div class="ds ${d.has_dinner?'dn':'pl'}">
       <div class="ds-info">
         <div class="ds-name">${mmdd(d.play_date)} 星期${wdn(d.play_date)}${d.has_dinner?' 🍽️':''}</div>
+        ${d.note?`<div style="font-size:12px;color:var(--sub);margin-top:2px;font-style:italic">📝 ${d.note}</div>`:''}
         <div class="ds-stat">全場已報名 ${d.players.filter(p=>!p.is_waitlist).length} 人</div>
       </div>
     </div>
@@ -360,6 +362,7 @@ function showRegModal(name,isGuest){
     <div class="ds ${d.has_dinner?'dn':'pl'}">
       <div class="ds-info">
         <div class="ds-name">${mmdd(d.play_date)} 星期${wd}${d.has_dinner?' 🍽️':''}</div>
+        ${d.note?`<div style="font-size:12px;color:#888;margin-top:1px;font-style:italic">📝 ${d.note}</div>`:''}
         <div class="ds-stat">已報名 ${d.registered} 人 | 剩 ${remain} 位</div>
       </div>
       ${already?'<span class="badge b-ok">✓ 已報名</span>':''}
@@ -450,6 +453,7 @@ function renderRoster(){
     <div class="ds ${d.has_dinner?'dn':'pl'}">
       <div class="ds-info">
         <div class="ds-name">${mmdd(d.play_date)} 星期${wdn(d.play_date)}${d.has_dinner?' 🍽️':''}</div>
+        ${d.note?`<div style="font-size:12px;color:var(--sub);margin-top:2px;font-style:italic">📝 ${d.note}</div>`:''}
         <div class="ds-stat">報名 ${reg.length} 人${wl.length?" | 候補 "+wl.length+" 人":""}</div>
       </div>
     </div>

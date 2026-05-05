@@ -45,6 +45,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
 .badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700}
 .b-ok{background:var(--g5);color:var(--g2)}
 .b-ex{background:#f5f5f5;color:var(--muted)}
+.ds.my{background:#fff3e0;border-left:4px solid #e65100}
 .pr{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid #f5f5f5;gap:8px;cursor:pointer}
 .pr:last-child{border-bottom:none}
 .pn{width:22px;height:22px;border-radius:50%;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -291,52 +292,76 @@ async function loadRegister(){
 
 function renderRegister(){
   const el=document.getElementById("reg-content");
-  const myName=getMyName(), team=getTeam().filter(Boolean), guests=getGuests().filter(Boolean);
-  const allMine=[myName,...team].filter(Boolean);
+  const myName=getMyName();
+  const team=getTeam().filter(Boolean);
+  const guests=getGuests().filter(Boolean);
+  const myCrew=[myName,...team].filter(Boolean); // 自己+隊員（不含來賓）
+  const allMine=[myName,...team,...guests].filter(Boolean); // 全部關心的人
+
+  if(!scheduleData.length){
+    el.innerHTML='<div class="empty"><div style="font-size:40px;margin-bottom:10px">🏌️</div>本週尚無開放場次</div>';
+    return;
+  }
+
   const now=new Date();
   const mon=new Date(now); mon.setDate(now.getDate()-(now.getDay()===0?6:now.getDay()-1)); mon.setHours(0,0,0,0);
   const guestOk=now>=mon;
+
   let html="";
 
-  // 已報名狀況
-  html+='<div class="sec">已報名狀況</div>';
-  let anyReg=false;
-  for(const d of rosterData){
-    const myR=d.players.filter(p=>allMine.includes(p.name)&&!p.is_waitlist&&!p.is_guest);
-    const myG=d.players.filter(p=>guests.includes(p.name)&&p.is_guest&&!p.is_waitlist);
-    const combined=[...myR,...myG];
-    if(!combined.length) continue;
-    anyReg=true;
-    html+=`<div class="card">
-    <div class="ds ${d.has_dinner?'dn':'pl'}">
-      <div class="ds-info">
-        <div class="ds-name">${mmdd(d.play_date)} 星期${wdn(d.play_date)}${d.has_dinner?' 🍽️':''}</div>
-        ${d.note?`<div style="font-size:12px;color:var(--sub);margin-top:2px;font-style:italic">📝 ${d.note}</div>`:''}
-        <div class="ds-stat">全場已報名 ${d.players.filter(p=>!p.is_waitlist).length} 人</div>
-      </div>
-    </div>
-    <div class="card-body"><div>
-    ${combined.map((p,i)=>`<div class="pr" onclick="showEditModal('${p.name}','${d.play_date}',${p.is_guest},'${p.reg_id||''}','${p.dinner_type||''}',${d.has_dinner})">
-      <div class="pn r">${i+1}</div>
-      <div class="pname">${p.name}${p.is_guest?'<span class="tag t-gs" style="margin-left:4px">來賓</span>':''}</div>
-      <div class="ptags">${dtags(p.dinner_type)}</div>
-      <div class="edit-hint">✎</div>
-    </div>`).join("")}
-    </div></div></div>`;
-  }
-  if(!anyReg) html+='<div class="card"><div class="card-body" style="color:var(--muted);font-size:13px;text-align:center;padding:18px">尚未報名任何場次</div></div>';
+  // ── 所有場次（含我關心的人名單）──
+  html+='<div class="sec">本週場次</div>';
+  for(const d of scheduleData){
+    const roster=rosterData.find(r=>r.play_date===d.play_date);
+    const allPlayers=(roster?.players||[]).filter(p=>!p.is_waitlist);
+    const myPlayers=allPlayers.filter(p=>allMine.includes(p.name));
+    const iRegistered=myName&&allPlayers.some(p=>p.name===myName&&!p.is_guest);
+    const remain=Math.max(0,(d.max_players||0)-d.registered);
 
-  // 常用隊員
-  html+='<div class="sec">常用隊員</div>';
+    // 場次header顏色
+    const dsClass=d.has_dinner?'dn':(iRegistered?'my':'pl');
+
+    html+=`<div class="card" style="margin-bottom:12px">
+    <div class="ds ${dsClass}">
+      <div class="ds-info">
+        <div class="ds-name" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span>${mmdd(d.play_date)} 星期${wdn(d.play_date)}${d.has_dinner?' 🍽️':''}</span>
+          ${!iRegistered&&myName?`<button class="tee-btn edit" style="font-size:12px;padding:4px 10px;background:var(--g2);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700" onclick="showRegModal('${myName}',false)">我要報名</button>`:''}
+          ${iRegistered?'<span class="badge b-ok">✓ 已報名</span>':''}
+        </div>
+        ${d.note?`<div style="font-size:12px;color:var(--sub);margin-top:2px;font-style:italic">📝 ${d.note}</div>`:''}
+        <div class="ds-stat">報名 ${d.registered} 人 | 可報 ${remain} 位</div>
+      </div>
+    </div>`;
+
+    // 我關心的人名單（自己+常用隊員+常用來賓）
+    if(myPlayers.length){
+      html+='<div class="card-body"><div>';
+      myPlayers.forEach((p,i)=>{
+        const tags=dtags(p.dinner_type);
+        html+=`<div class="pr" onclick="showEditModal('${p.name}','${d.play_date}',${p.is_guest},'${p.reg_id||''}','${p.dinner_type||''}',${d.has_dinner})">
+          <div class="pn r">${i+1}</div>
+          <div class="pname">${p.name}${p.is_guest?'<span class="tag t-gs" style="margin-left:4px">來賓</span>':''}</div>
+          <div class="ptags">${tags}</div>
+          <div class="edit-hint">✎</div>
+        </div>`;
+      });
+      html+='</div></div>';
+    } else {
+      html+='<div class="card-body" style="color:var(--muted);font-size:12px;padding:10px 14px">（常用名單中尚無人報名）</div>';
+    }
+    html+='</div>';
+  }
+
+  // ── 常用隊員快速報名 ──
   if(team.length){
+    html+='<div class="sec">常用隊員</div>';
     html+='<div class="card"><div class="card-body"><div class="mg">';
     for(const n of team) html+=`<button class="mb" onclick="showRegModal('${n}',false)">${n}</button>`;
     html+='</div></div></div>';
-  } else {
-    html+='<div class="card"><div class="card-body" style="color:var(--muted);font-size:13px;text-align:center;padding:16px">請至「⚙️ 我的」設定常用隊員</div></div>';
   }
 
-  // 常用來賓
+  // ── 常用來賓 ──
   html+='<div class="sec">常用來賓</div>';
   if(!guestOk){
     html+='<div class="card"><div class="card-body" style="color:var(--muted);font-size:12px;text-align:center;padding:16px">週一 00:00 後開放來賓報名</div></div>';
@@ -347,567 +372,8 @@ function renderRegister(){
   } else {
     html+='<div class="card"><div class="card-body" style="color:var(--muted);font-size:13px;text-align:center;padding:16px">請至「⚙️ 我的」設定常用來賓</div></div>';
   }
-  el.innerHTML=html;
-}
-
-function showRegModal(name,isGuest){
-  if(!scheduleData.length){toast("⚠️ 請先載入場次");return}
-  let html=`<div class="modal-title">${name}</div>
-  <div class="modal-sub">${isGuest?'來賓':'隊員'} · 選擇場次</div>`;
-  for(const d of scheduleData){
-    const wd=wdn(d.play_date);
-    const roster=rosterData.find(r=>r.play_date===d.play_date);
-    const already=roster&&roster.players.some(p=>p.name===name&&!p.is_waitlist&&(isGuest?p.is_guest:!p.is_guest));
-    const remain=Math.max(0,(d.max_players||0)-d.registered);
-    html+=`<div class="card" style="margin-bottom:10px">
-    <div class="ds ${d.has_dinner?'dn':'pl'}">
-      <div class="ds-info">
-        <div class="ds-name">${mmdd(d.play_date)} 星期${wd}${d.has_dinner?' 🍽️':''}</div>
-        ${d.note?`<div style="font-size:12px;color:#888;margin-top:1px;font-style:italic">📝 ${d.note}</div>`:''}
-        <div class="ds-stat">已報名 ${d.registered} 人 | 剩 ${remain} 位</div>
-      </div>
-      ${already?'<span class="badge b-ok">✓ 已報名</span>':''}
-    </div>
-    <div class="card-body">`;
-    if(already){
-      const reg=roster.players.find(p=>p.name===name&&(isGuest?p.is_guest:!p.is_guest));
-      html+=`<button class="btn br bsm" onclick="doCancel('${name}','${d.play_date}',${isGuest},'${reg?.reg_id||''}');closeModal()">✖ 取消報名</button>`;
-    } else if(d.has_dinner){
-      html+=`<div class="dc">
-        <button class="btn bb bsm" onclick="doReg('${name}','${d.play_date}','both',${isGuest});closeModal()">⛳🍽️ 打球＋餐敘</button>
-        <button class="btn bg bsm" onclick="doReg('${name}','${d.play_date}','golf_only',${isGuest});closeModal()">⛳ 打球不餐敘</button>
-        <button class="btn bp bsm" onclick="doReg('${name}','${d.play_date}','dinner_only',${isGuest});closeModal()">🍽️ 餐敘不打球</button>
-      </div>`;
-    } else {
-      html+=`<button class="btn bg bsm" onclick="doReg('${name}','${d.play_date}','',${isGuest});closeModal()">✅ 報名</button>`;
-    }
-    html+='</div></div>';
-  }
-  openModal(html);
-}
-
-function showEditModal(name,playDate,isGuest,regId,dinnerType,hasDinner){
-  let html=`<div class="modal-title">${name}</div>
-  <div class="modal-sub">${mmdd(playDate)} 星期${wdn(playDate)} 已報名</div>
-  <div style="margin-bottom:12px">${dtags(dinnerType)||'<span class="tag t-g">打球</span>'}</div>`;
-  if(hasDinner&&!isGuest){
-    html+=`<div class="sec" style="margin-top:0">修改餐敘選項</div>
-    <div class="dc">
-      <button class="btn bb bsm" onclick="doReg('${name}','${playDate}','both',${isGuest});closeModal()">⛳🍽️ 打球＋餐敘</button>
-      <button class="btn bg bsm" onclick="doReg('${name}','${playDate}','golf_only',${isGuest});closeModal()">⛳ 打球不餐敘</button>
-      <button class="btn bp bsm" onclick="doReg('${name}','${playDate}','dinner_only',${isGuest});closeModal()">🍽️ 餐敘不打球</button>
-    </div><div style="margin-top:10px">`;
-  } else html+='<div>';
-  html+=`<button class="btn br bsm" onclick="doCancel('${name}','${playDate}',${isGuest},'${regId}');closeModal()">✖ 取消報名</button></div>`;
-  openModal(html);
-}
-
-async function doReg(name,playDate,dinnerType,isGuest){
-  const myName=getMyName(); toast("報名中...");
-  try{
-    const res=await apiFetch("/api/register-by-name",{method:"POST",body:JSON.stringify({
-      name,play_date:playDate,dinner_type:dinnerType,operator:myName||name,is_guest:isGuest,invited_by:myName||""
-    })});
-    if(res.status==="success") toast(res.info?.is_waitlist?`✅ ${name} 加入候補`:`✅ ${name} 報名成功`);
-    else if(res.status==="already_registered") toast(`⚠️ ${name} 已報名此場次`);
-    else if(res.status==="member_not_found") toast(`⚠️ 找不到成員「${name}」`);
-    else toast("⚠️ "+res.status);
-    await reloadData(); renderRegister();
-  }catch(e){ toast("❌ 報名失敗"); }
-}
-
-async function doCancel(name,playDate,isGuest,regId){
-  const myName=getMyName(); toast("取消中...");
-  try{
-    const res=await apiFetch("/api/cancel-by-name",{method:"POST",body:JSON.stringify({
-      name,play_date:playDate,is_guest:isGuest,reg_id:regId,operator:myName||name
-    })});
-    toast(res.status==="cancelled"||res.status==="success"?`✅ ${name} 取消成功`:"⚠️ "+res.status);
-    await reloadData(); renderRegister();
-  }catch(e){ toast("❌ 取消失敗"); }
-}
-
-async function reloadData(){
-  const [s,r]=await Promise.all([apiFetch("/api/schedule-public"),apiFetch("/api/registrations-public")]);
-  scheduleData=s.dates||[]; rosterData=r.dates||[];
-}
-
-// ══ 名單頁 ══
-async function loadRoster(){
-  const el=document.getElementById("roster-content");
-  el.innerHTML='<div class="loading"><div class="spinner"></div>載入中...</div>';
-  try{
-    const [s,r]=await Promise.all([
-      apiFetch("/api/schedule-public"),
-      apiFetch("/api/registrations-public")
-    ]);
-    scheduleData=s.dates||[];
-    rosterData=r.dates||[];
-    renderRoster();
-  }catch(e){ el.innerHTML='<div class="empty">⚠️ 載入失敗</div>'; }
-}
-
-function renderRoster(){
-  const el=document.getElementById("roster-content");
-  // 用 scheduleData 為主，確保所有開放場次都顯示
-  const allDates = scheduleData.length ? scheduleData.map(s=>s.play_date) :
-                   rosterData.map(r=>r.play_date);
-  if(!allDates.length){el.innerHTML='<div class="empty"><div style="font-size:40px;margin-bottom:10px">📋</div>本週尚無場次</div>';return}
-  let html="";
-  for(const play_date of allDates){
-    const d = rosterData.find(r=>r.play_date===play_date) ||
-              {play_date, has_dinner: scheduleData.find(s=>s.play_date===play_date)?.has_dinner||false, players:[]};
-    const sched = scheduleData.find(s=>s.play_date===play_date);
-    d.note = sched?.note || "";
-    d.max_players = sched?.max_players || 0;
-    d.registered_count = sched?.registered || 0;
-    const reg=d.players.filter(p=>!p.is_waitlist);
-    const wl=d.players.filter(p=>p.is_waitlist);
-    html+=`<div class="card" style="margin-bottom:12px">
-    <div class="ds ${d.has_dinner?'dn':'pl'}">
-      <div class="ds-info">
-        <div class="ds-name">${mmdd(d.play_date)} 星期${wdn(d.play_date)}${d.has_dinner?' 🍽️':''}</div>
-        ${d.note?`<div style="font-size:12px;color:var(--sub);margin-top:2px;font-style:italic">📝 ${d.note}</div>`:''}
-        <div class="ds-stat">報名 ${reg.length} 人 | 可報 ${Math.max(0,(d.max_players||0)-reg.length)} 位${wl.length?" | 候補 "+wl.length+" 人":""}</div>
-      </div>
-    </div>
-    <div class="card-body"><div>
-    ${reg.map((p,i)=>`<div class="pr">
-      <div class="pn r">${i+1}</div>
-      <div class="pname">${p.is_guest
-        ? p.name+' / 來賓 / '+(p.invited_by||'')
-        : p.name}</div>
-      <div class="ptags">${p.is_guest?'<span class="tag t-gs">來賓</span>':''}${dtags(p.dinner_type)}</div>
-    </div>`).join("")}
-    ${wl.length?'<div style="font-size:11px;font-weight:900;color:var(--muted);margin:8px 0 4px">候補</div>':''}
-    ${wl.map((p,i)=>`<div class="pr">
-      <div class="pn w">W${i+1}</div>
-      <div class="pname">${p.name}</div>
-      <div class="ptags"><span class="tag t-wl">候補</span></div>
-    </div>`).join("")}
-    </div></div></div>`;
-  }
-  el.innerHTML=html;
-}
-
-// ══ 設定頁 ══
-function renderSettings(){
-  const myName=getMyName(), team=getTeam(), guests=getGuests();
-  let html=`
-  <div class="sec">我自己</div>
-  <div class="card"><div class="card-body">
-    <div class="ilabel">我的名字（必填，用於報名）</div>
-    <input class="input" id="s-myname" value="${myName}" placeholder="輸入你的正式姓名" onchange="saveMyName(this.value)">
-  </div></div>
-  <div class="sec">常用隊員（最多7人）</div>`;
-  team.forEach((n,i)=>{
-    html+=`<div class="srow">
-      <div class="snum">${i+1}</div>
-      <input class="sinput" placeholder="隊員${i+1}姓名" value="${n}" onchange="saveTeam(${i},this.value)" list="ml">
-      ${n?`<button class="sclear" onclick="clearTeam(${i})">×</button>`:''}
-    </div>`;
-  });
-  html+=`<datalist id="ml">${allMembers.map(m=>`<option value="${m}">`).join('')}</datalist>
-  <div class="sec">常用來賓（最多11人）</div>`;
-  guests.forEach((n,i)=>{
-    html+=`<div class="srow">
-      <div class="snum">${i+1}</div>
-      <input class="sinput" placeholder="來賓${i+1}姓名" value="${n}" onchange="saveGuest(${i},this.value)">
-      ${n?`<button class="sclear" onclick="clearGuest(${i})">×</button>`:''}
-    </div>`;
-  });
-  html+='<div style="height:24px"></div>';
-  document.getElementById("settings-content").innerHTML=html;
-  if(myName) document.getElementById("nav-title").textContent="⛳ "+myName;
-  if(!allMembers.length){
-    apiFetch("/api/members-public").then(r=>{
-      allMembers=r.members||[];
-      const dl=document.getElementById("ml");
-      if(dl) dl.innerHTML=allMembers.map(m=>`<option value="${m}">`).join('');
-    }).catch(()=>{});
-  }
-}
-
-function saveMyName(v){S.set("myName",v.trim());if(v.trim())document.getElementById("nav-title").textContent="⛳ "+v.trim();toast("✅ 已儲存")}
-function saveTeam(i,v){const t=getTeam();t[i]=v.trim();S.set("myTeam",t);toast("✅ 已儲存");renderSettings()}
-function clearTeam(i){const t=getTeam();t[i]="";S.set("myTeam",t);renderSettings()}
-function saveGuest(i,v){const g=getGuests();g[i]=v.trim();S.set("myGuests",g);toast("✅ 已儲存");renderSettings()}
-function clearGuest(i){const g=getGuests();g[i]="";S.set("myGuests",g);renderSettings()}
-
-// ══ 管理頁 ══
-let teeTimes=[], schedulable=[];
-
-async function loadAdmin(){
-  const myName=getMyName();
-  // 先查管理者身份
-  if(!adminChecked){
-    try{
-      const res=await apiFetch("/api/admin/check",{method:"POST",body:JSON.stringify({name:normName(myName),code:""})});
-      isAdmin=res.is_admin||false;
-    }catch(e){isAdmin=false;}
-    adminChecked=true;
-  }
-  const banner=document.getElementById("admin-lock-banner");
-  banner.style.display=isAdmin?"none":"block";
-  // 載入管理者列表、球敘、可設定日期（所有人都能讀）
-  try{
-    const [admR,tee,sched]=await Promise.all([
-      apiFetch("/api/admin/admins"),
-      apiFetch("/api/admin/tee-times"),
-      apiFetch("/api/admin/schedulable-dates")
-    ]);
-    adminsData=admR.admins||[];
-    teeTimes=tee.tee_times||[];
-    schedulable=sched.dates||[];
-  }catch(e){ console.error("loadAdmin error",e); }
-  renderAdmTee();
-}
-
-function renderAdmTee(){
-  const el=document.getElementById("adm-tee");
-  const dis=!isAdmin?"disabled":"";
-  let html="";
-
-  // 新增球敘按鈕
-  html+=`<button class="btn bg" style="margin-bottom:14px" ${dis} onclick="showAddTeeModal()">＋ 新增球敘</button>`;
-
-  // 球敘列表
-  if(!teeTimes.length){
-    html+='<div class="empty">尚無球敘資料</div>';
-  } else {
-    // 時間軸排序（最近在前）
-    const sorted=[...teeTimes].sort((a,b)=>a.play_date.localeCompare(b.play_date));
-    for(const t of sorted){
-      const exp=isExpired(t.play_date);
-      const cls=exp?'past':(t.has_dinner?'dinner':'future');
-      html+=`<div class="tee-card">
-      <div class="tee-head ${cls}">
-        <div class="tee-info">
-          <div class="tee-date">${mmdd(t.play_date)} 星期${wdn(t.play_date)}${t.has_dinner?' 🍽️':''}${exp?' <span class="badge b-ex">過期</span>':''}</div>
-          <div class="tee-stat">${t.max_groups} 組（${t.max_players} 人）｜已報名 ${t.registered} 人</div>
-        </div>
-        <div class="tee-actions">
-          <button class="tee-btn edit" ${dis} onclick="showEditTeeModal('${t.play_date}',${t.max_groups},${t.has_dinner},'${(t.note||"").replace(/'/g,"\'")}')">修改</button>
-          <button class="tee-btn del" ${dis} onclick="deleteTee('${t.play_date}')">刪除</button>
-        </div>
-      </div>
-      ${t.note?`<div class="tee-note">📝 ${t.note}</div>`:''}
-      </div>`;
-    }
-  }
-  el.innerHTML=html;
-}
-
-function showAddTeeModal(){
-  if(!isAdmin){toast("⚠️ 非管理者");return}
-  const opts=schedulable.map(d=>`<option value="${d}">${mmdd(d)} 星期${wdn(d)}</option>`).join("");
-  let html=`<div class="modal-title">＋ 新增球敘</div>
-  <div class="modal-sub">選擇日期與設定</div>
-  <div class="ilabel">日期</div>
-  <select class="input" id="tee-date" style="margin-bottom:10px">${opts}</select>
-  <div class="ilabel">組數</div>
-  <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap" id="group-btns">
-    ${[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20].map(n=>`<button class="tee-btn edit" style="font-size:13px;padding:7px 10px" onclick="selectGroups(${n},this)">${n}</button>`).join("")}
-  </div>
-  <input type="hidden" id="tee-groups" value="0">
-  <div class="toggle-row">
-    <div class="toggle-label">含餐敘</div>
-    <label class="toggle"><input type="checkbox" id="tee-dinner"><span class="toggle-slider"></span></label>
-  </div>
-  <div class="ilabel" style="margin-top:10px">備註（選填）</div>
-  <div style="display:flex;gap:6px;margin-bottom:4px">
-    <button class="tee-btn edit bsm" onclick="document.getElementById('tee-note').value=''">清空</button>
-    <button class="tee-btn edit bsm" onclick="pasteNote()">貼上</button>
-    <button class="tee-btn edit bsm" onclick="copyNote()">全選複製</button>
-  </div>
-  <textarea class="textarea" id="tee-note" placeholder="輸入備註說明..."></textarea>
-  <button class="btn bg" style="margin-top:14px" onclick="submitAddTee()">✅ 確認新增</button>`;
-  openModal(html);
-}
-
-function selectGroups(n,el){
-  document.querySelectorAll("#group-btns .tee-btn").forEach(b=>b.style.background="");
-  el.style.background="var(--g3)"; el.style.color="#fff";
-  document.getElementById("tee-groups").value=n;
-}
-
-async function pasteNote(){
-  try{
-    const t=await navigator.clipboard.readText();
-    document.getElementById("tee-note").value=t;
-  }catch{toast("⚠️ 無法存取剪貼簿")}
-}
-
-function copyNote(){
-  const ta=document.getElementById("tee-note");
-  ta.select();
-  document.execCommand("copy");
-  toast("✅ 已複製");
-}
-
-async function submitAddTee(){
-  const playDate=document.getElementById("tee-date").value;
-  const maxGroups=parseInt(document.getElementById("tee-groups").value||"0");
-  const hasDinner=document.getElementById("tee-dinner").checked;
-  const note=document.getElementById("tee-note").value.trim();
-  if(!playDate||maxGroups<=0){toast("⚠️ 請選擇組數");return}
-  try{
-    await apiFetch("/api/admin/set-tee",{method:"POST",body:JSON.stringify({
-      operator:getMyName(),play_date:playDate,max_groups:maxGroups,has_dinner:hasDinner,note
-    })});
-    toast("✅ 球敘設定成功");
-    closeModal();
-    const tee=await apiFetch("/api/admin/tee-times");
-    teeTimes=tee.tee_times||[];
-    renderAdmTee();
-    // 同時更新報名頁資料
-    scheduleData=[];
-  }catch(e){toast("❌ 設定失敗")}
-}
-
-function showEditTeeModal(playDate,maxGroups,hasDinner,note){
-  if(!isAdmin){toast("⚠️ 非管理者");return}
-  let html=`<div class="modal-title">修改球敘</div>
-  <div class="modal-sub">${mmdd(playDate)} 星期${wdn(playDate)}</div>
-  <div class="ilabel">組數</div>
-  <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap" id="edit-group-btns">
-    ${[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20].map(n=>`<button class="tee-btn edit" style="font-size:13px;padding:7px 10px;${n===maxGroups?'background:var(--g3);color:#fff':''}" onclick="selectEditGroups(${n},this)">${n}</button>`).join("")}
-  </div>
-  <input type="hidden" id="edit-groups" value="${maxGroups}">
-  <div class="toggle-row">
-    <div class="toggle-label">含餐敘</div>
-    <label class="toggle"><input type="checkbox" id="edit-dinner" ${hasDinner?"checked":""}><span class="toggle-slider"></span></label>
-  </div>
-  <div class="ilabel" style="margin-top:10px">備註</div>
-  <div style="display:flex;gap:6px;margin-bottom:4px">
-    <button class="tee-btn edit bsm" onclick="document.getElementById('edit-note').value=''">清空</button>
-    <button class="tee-btn edit bsm" onclick="pasteEditNote()">貼上</button>
-    <button class="tee-btn edit bsm" onclick="copyEditNote()">全選複製</button>
-  </div>
-  <textarea class="textarea" id="edit-note" placeholder="備註...">${note}</textarea>
-  <button class="btn bg" style="margin-top:14px" onclick="submitEditTee('${playDate}')">✅ 確認修改</button>`;
-  openModal(html);
-}
-
-function selectEditGroups(n,el){
-  document.querySelectorAll("#edit-group-btns .tee-btn").forEach(b=>{b.style.background="";b.style.color=""});
-  el.style.background="var(--g3)"; el.style.color="#fff";
-  document.getElementById("edit-groups").value=n;
-}
-
-async function pasteEditNote(){
-  try{const t=await navigator.clipboard.readText();document.getElementById("edit-note").value=t;}
-  catch{toast("⚠️ 無法存取剪貼簿")}
-}
-function copyEditNote(){
-  const ta=document.getElementById("edit-note");ta.select();document.execCommand("copy");toast("✅ 已複製");
-}
-
-async function submitEditTee(playDate){
-  const maxGroups=parseInt(document.getElementById("edit-groups").value||"0");
-  const hasDinner=document.getElementById("edit-dinner").checked;
-  const note=document.getElementById("edit-note").value.trim();
-  if(maxGroups<=0){toast("⚠️ 請選擇組數");return}
-  try{
-    await apiFetch("/api/admin/update-tee",{method:"POST",body:JSON.stringify({
-      operator:getMyName(),play_date:playDate,max_groups:maxGroups,has_dinner:hasDinner,note
-    })});
-    toast("✅ 修改成功");
-    closeModal();
-    const tee=await apiFetch("/api/admin/tee-times");
-    teeTimes=tee.tee_times||[]; renderAdmTee();
-    scheduleData=[];
-  }catch(e){toast("❌ 修改失敗: "+e.message)}
-}
-
-async function deleteTee(playDate){
-  if(!confirm(`確定刪除 ${mmdd(playDate)} 星期${wdn(playDate)} 的球敘？`)) return;
-  try{
-    await apiFetch("/api/admin/delete-tee",{method:"POST",body:JSON.stringify({operator:getMyName(),play_date:playDate})});
-    toast("✅ 已刪除");
-    const tee=await apiFetch("/api/admin/tee-times");
-    teeTimes=tee.tee_times||[]; renderAdmTee();
-    scheduleData=[];
-  }catch(e){toast("❌ 刪除失敗")}
-}
-
-// ══ 管理者設定 ══
-function renderAdmAdmins(){
-  const el=document.getElementById("adm-admins");
-  const dis=!isAdmin?"disabled":"";
-  const MAX=6;
-  // 確保有6行
-  while(adminsData.length<MAX) adminsData.push({display_name:"",line_user_id:""});
-  const rows=adminsData.slice(0,MAX);
-
-  let html=`<div class="sec">管理者名單（最多6位）</div>
-  <div style="display:grid;grid-template-columns:28px 1fr 1fr 28px;gap:6px;margin-bottom:6px">
-    <div></div>
-    <div style="font-size:11px;font-weight:900;color:var(--muted);padding:0 4px">本名</div>
-    <div style="font-size:11px;font-weight:900;color:var(--muted);padding:0 4px">Line顯示名</div>
-    <div></div>
-  </div>`;
-
-  rows.forEach((a,i)=>{
-    html+=`<div class="admin-row">
-      <div class="admin-idx">${i+1}</div>
-      <input class="admin-input" placeholder="本名" value="${a.display_name||''}" ${dis} oninput="updateAdmin(${i},'display_name',this.value)">
-      <input class="admin-input" placeholder="Line顯示名" value="${a.line_user_id||''}" ${dis} oninput="updateAdmin(${i},'line_user_id',this.value)">
-      <button class="admin-del" ${dis} onclick="clearAdmin(${i})">×</button>
-    </div>`;
-  });
-
-  html+=`<button class="btn bg" style="margin-top:12px" ${dis} onclick="saveAdmins()">💾 儲存管理者名單</button>`;
-
-  // 緊急解鎖
-  html+=`<div style="margin-top:24px;padding-top:16px;border-top:1px dashed var(--border)">
-    <div style="font-size:12px;color:var(--muted);margin-bottom:8px">緊急解鎖（輸入密碼後按解鎖）</div>
-    <div style="display:flex;gap:8px">
-      <input class="input" id="emergency-input" placeholder="2xxxxxx1" style="flex:1" type="password">
-      <button class="btn bo bsm" style="flex:0;white-space:nowrap;padding:9px 16px" onclick="emergencyUnlock()">緊急修改</button>
-    </div>
-  </div>`;
 
   el.innerHTML=html;
-  // 每次進入清空緊急密碼欄位（不預填）
-  setTimeout(()=>{
-    const inp=document.getElementById("emergency-input");
-    if(inp) inp.value="";
-  },0);
 }
 
-function updateAdmin(i,field,val){
-  if(!adminsData[i]) adminsData[i]={display_name:"",line_user_id:""};
-  adminsData[i][field]=val.trim();
-}
-
-function clearAdmin(i){
-  if(!isAdmin){toast("⚠️ 非管理者");return}
-  adminsData[i]={display_name:"",line_user_id:""};
-  renderAdmAdmins();
-}
-
-async function saveAdmins(){
-  if(!isAdmin){toast("⚠️ 非管理者");return}
-  const valid=adminsData.filter(a=>a.display_name&&a.line_user_id);
-  try{
-    await apiFetch("/api/admin/save-admins",{method:"POST",body:JSON.stringify({
-      operator:getMyName(),admins:valid
-    })});
-    toast("✅ 管理者名單已儲存");
-    // 重新驗證身份
-    adminChecked=false;
-    await loadAdmin();
-  }catch(e){toast("❌ 儲存失敗")}
-}
-
-async function emergencyUnlock(){
-  const inp=document.getElementById("emergency-input");
-  const code=(inp?.value||"").trim();
-  if(code===EMERGENCY){
-    isAdmin=true;
-    adminChecked=true;
-    document.getElementById("admin-lock-banner").style.display="none";
-    toast("🔓 已緊急解鎖");
-    renderAdmTee();
-    renderAdmAdmins();
-  } else {
-    toast("❌ 密碼錯誤");
-  }
-}
-
-// ══ LOGS ══
-async function loadAdmLogs(){
-  const el=document.getElementById("adm-logs");
-  el.innerHTML='<div class="loading"><div class="spinner"></div>載入中...</div>';
-  try{
-    const r=await apiFetch(`/api/admin/logs?days=${logDays}`);
-    allLogs=r.logs||[];
-    renderAdmLogs();
-  }catch(e){ el.innerHTML='<div class="empty">⚠️ 載入失敗</div>'; }
-}
-
-function renderAdmLogs(){
-  const el=document.getElementById("adm-logs");
-  const days=[1,3,7,10,30];
-  let html=`<div class="filter-row">
-    ${days.map(d=>`<button class="filter-btn ${d===logDays?'active':''}" onclick="setLogDays(${d})">${d}天</button>`).join("")}
-    <button class="filter-btn ${logDays===999?'active':''}" onclick="setLogDays(999)">全部(30)</button>
-  </div>
-  <input class="search-input" placeholder="🔍 關鍵字篩選..." value="${logSearch}" oninput="setLogSearch(this.value)">
-  <div style="margin-top:10px">`;
-
-  const filtered=allLogs.filter(l=>{
-    if(!logSearch) return true;
-    const s=logSearch.toLowerCase();
-    return (l.display_name||"").toLowerCase().includes(s) ||
-           (l.action||"").toLowerCase().includes(s) ||
-           (l.detail||"").toLowerCase().includes(s) ||
-           (l.line_user_id||"").toLowerCase().includes(s);
-  });
-
-  if(!filtered.length){
-    html+='<div class="empty">無符合紀錄</div>';
-  } else {
-    for(const l of filtered){
-      const dt=l.created_at?(new Date(l.created_at)).toLocaleString("zh-TW",{timeZone:"Asia/Taipei",hour12:false,month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}):"";
-      html+=`<div class="log-row">
-        <div class="log-time">${dt}</div>
-        <div class="log-body">
-          <span class="log-name">${l.operator_name||l.display_name||""}</span>
-          <span class="log-uid">${(l.operator_id||l.line_user_id||"").substring(0,16)}</span>
-          <span class="log-action">${l.action_type||l.action||""}</span>
-          <span class="log-detail">${l.target_name||""} ${l.play_date||""} ${l.detail||""}</span>
-        </div>
-      </div>`;
-    }
-  }
-  html+='</div>';
-  el.innerHTML=html;
-}
-
-function setLogDays(d){
-  logDays=d;
-  loadAdmLogs();
-}
-
-function setLogSearch(v){
-  logSearch=v;
-  renderAdmLogs();
-}
-
-// ══ Modal ══
-function openModal(html){
-  document.getElementById("modal-inner").innerHTML=html;
-  document.getElementById("modal-bg").classList.add("open");
-}
-function closeModal(e){
-  if(!e||e.target===document.getElementById("modal-bg"))
-    document.getElementById("modal-bg").classList.remove("open");
-}
-
-// ══ 離開函數 ══
-function doLeave(){
-  try{
-    if(typeof liff !== "undefined" && liff.closeWindow){
-      liff.closeWindow();
-    } else {
-      window.close();
-    }
-  }catch(e){ window.close(); }
-}
-
-// ══ 初始化 ══
-(async()=>{
-  // 嘗試初始化 LIFF（非必要，失敗也繼續）
-  try{
-    await liff.init({liffId:"2009411318-rdNGpvNz"});
-  }catch(e){ console.log("LIFF init skip:", e.message); }
-  const myName=getMyName();
-  if(myName) document.getElementById("nav-title").textContent="⛳ "+myName;
-  else setTimeout(()=>toast("💡 請先至「⚙️ 我的」設定你的名字",4000),800);
-  await loadRegister();
-})();
-</script>
-</body>
-</html>
+>

@@ -530,20 +530,17 @@ async function loadAdmin(){
   }
   const banner=document.getElementById("admin-lock-banner");
   banner.style.display=isAdmin?"none":"block";
-  // 載入管理者列表
+  // 載入管理者列表、球敘、可設定日期（所有人都能讀）
   try{
-    const r=await apiFetch("/api/admin/admins");
-    adminsData=r.admins||[];
-  }catch(e){}
-  // 載入球敘
-  try{
-    const [tee,sched]=await Promise.all([
+    const [admR,tee,sched]=await Promise.all([
+      apiFetch("/api/admin/admins"),
       apiFetch("/api/admin/tee-times"),
       apiFetch("/api/admin/schedulable-dates")
     ]);
+    adminsData=admR.admins||[];
     teeTimes=tee.tee_times||[];
     schedulable=sched.dates||[];
-  }catch(e){}
+  }catch(e){ console.error("loadAdmin error",e); }
   renderAdmTee();
 }
 
@@ -747,16 +744,16 @@ function renderAdmAdmins(){
   html+=`<div style="margin-top:24px;padding-top:16px;border-top:1px dashed var(--border)">
     <div style="font-size:12px;color:var(--muted);margin-bottom:8px">緊急解鎖（輸入密碼後按解鎖）</div>
     <div style="display:flex;gap:8px">
-      <input class="input" id="emergency-input" placeholder="28746661" style="flex:1" oninput="this.dataset.changed='1'">
+      <input class="input" id="emergency-input" placeholder="2xxxxxx1" style="flex:1" type="password">
       <button class="btn bo bsm" style="flex:0;white-space:nowrap;padding:9px 16px" onclick="emergencyUnlock()">緊急修改</button>
     </div>
   </div>`;
 
   el.innerHTML=html;
-  // 每次進入重設緊急密碼欄位
+  // 每次進入清空緊急密碼欄位（不預填）
   setTimeout(()=>{
     const inp=document.getElementById("emergency-input");
-    if(inp) inp.value="28746661";
+    if(inp) inp.value="";
   },0);
 }
 

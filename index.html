@@ -256,7 +256,7 @@ function renderRegister(){
       <div class="ds-info">
         <div class="ds-name" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <span>${mmdd(d.play_date)} 星期${wdn(d.play_date)}${d.has_dinner?' 🍽️':''}</span>
-          ${!iReg&&myName?`<button class="reg-btn" onclick="showRegModal('${myName}',false)">我要報名</button>`:''}
+          ${!iReg&&myName?`<button class="reg-btn" onclick="quickReg('${myName}','${d.play_date}',${d.has_dinner})">我要報名</button>`:''}
           ${iReg?'<span class="badge b-ok">✓ 已報名</span>':''}
         </div>
         ${d.note?`<div style="font-size:12px;color:var(--sub);margin-top:2px;font-style:italic">📝 ${d.note}</div>`:''}
@@ -268,8 +268,8 @@ function renderRegister(){
       myPlayers.forEach((p,i)=>{
         html+=`<div class="pr" onclick="showEditModal('${p.name}','${d.play_date}',${p.is_guest},'${p.reg_id||''}','${p.dinner_type||''}',${d.has_dinner})">
           <div class="pn r">${i+1}</div>
-          <div class="pname">${p.name}${p.is_guest?'<span class="tag t-gs" style="margin-left:4px">來賓</span>':''}</div>
-          <div class="ptags">${dtags(p.dinner_type)}</div>
+          <div class="pname">${p.is_guest?p.name+' / 來賓 / '+(p.invited_by||'?'):p.name}</div>
+          <div class="ptags">${p.is_guest?'<span class="tag t-gs">來賓</span>':''}${dtags(p.dinner_type)}</div>
           <div class="edit-hint">✎</div>
         </div>`;
       });
@@ -292,6 +292,21 @@ function renderRegister(){
     html+='</div></div></div>';
   }else{html+='<div class="card"><div class="card-body" style="color:var(--muted);font-size:13px;text-align:center;padding:16px">請至「⚙️ 我的」設定常用來賓</div></div>'}
   el.innerHTML=html;
+}
+
+function quickReg(name,playDate,hasDinner){
+  // 直接報名單一場次（我要報名按鈕用）
+  if(hasDinner){
+    openModal(`<div class="modal-title">${name}</div>
+    <div class="modal-sub">${mmdd(playDate)} 星期${wdn(playDate)} 🍽️ 選擇餐敘方式</div>
+    <div class="dc">
+      <button class="btn bb bsm" onclick="doReg('${name}','${playDate}','both',false);closeModal()">⛳🍽️ 打球＋餐敘</button>
+      <button class="btn bg bsm" onclick="doReg('${name}','${playDate}','golf_only',false);closeModal()">⛳ 打球不餐敘</button>
+      <button class="btn bp bsm" onclick="doReg('${name}','${playDate}','dinner_only',false);closeModal()">🍽️ 餐敘不打球</button>
+    </div>`);
+  }else{
+    doReg(name,playDate,'',false);
+  }
 }
 
 function showRegModal(name,isGuest){
@@ -390,7 +405,7 @@ function renderRoster(){
       <div class="ds-info">
         <div class="ds-name" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <span>${mmdd(sched.play_date)} 星期${wdn(sched.play_date)}${sched.has_dinner?' 🍽️':''}</span>
-          ${!iReg&&myName?`<button class="reg-btn" onclick="showRegModal('${myName}',false)">我要報名</button>`:''}
+          ${!iReg&&myName?`<button class="reg-btn" onclick="quickReg('${myName}','${sched.play_date}',${sched.has_dinner})">我要報名</button>`:''}
           ${iReg?'<span class="badge b-ok">✓ 已報名</span>':''}
         </div>
         ${sched.note?`<div style="font-size:12px;color:var(--sub);margin-top:2px;font-style:italic">📝 ${sched.note}</div>`:''}
@@ -400,7 +415,7 @@ function renderRoster(){
     <div class="card-body"><div>
     ${reg.map((p,i)=>`<div class="pr">
       <div class="pn r">${i+1}</div>
-      <div class="pname">${p.name}${p.is_guest?'<span class="tag t-gs" style="margin-left:4px">來賓</span>':''}</div>
+      <div class="pname">${p.is_guest?p.name+' / 來賓 / '+(p.invited_by||'?'):p.name}</div>
       <div class="ptags">${dtags(p.dinner_type)}</div>
     </div>`).join("")}
     ${wl.length?'<div style="font-size:11px;font-weight:900;color:var(--muted);margin:8px 0 4px">候補</div>':''}

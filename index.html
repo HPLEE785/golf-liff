@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>⛳ 高爾夫報名</title>
+<script src="https://static.line-scdn.net/liff/edge/versions/2.22.3/sdk.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -149,7 +150,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
 <div class="nav">
   <span style="font-size:22px;line-height:1">⛳</span>
   <div class="nav-title" id="nav-title">高爾夫報名</div>
-  <button class="nav-refresh" onclick="liff.closeWindow?liff.closeWindow():window.close()" style="margin-right:4px">✕ 離開</button>
+  <button class="nav-refresh" id="btn-leave" onclick="doLeave()" style="margin-right:4px;padding:7px 14px;font-size:14px;font-weight:700">離開</button>
   <button class="nav-refresh" onclick="refresh()">🔄</button>
 </div>
 <div class="tabs" id="main-tabs">
@@ -872,8 +873,23 @@ function closeModal(e){
     document.getElementById("modal-bg").classList.remove("open");
 }
 
+// ══ 離開函數 ══
+function doLeave(){
+  try{
+    if(typeof liff !== "undefined" && liff.closeWindow){
+      liff.closeWindow();
+    } else {
+      window.close();
+    }
+  }catch(e){ window.close(); }
+}
+
 // ══ 初始化 ══
 (async()=>{
+  // 嘗試初始化 LIFF（非必要，失敗也繼續）
+  try{
+    await liff.init({liffId:"2009411318-rdNGpvNz"});
+  }catch(e){ console.log("LIFF init skip:", e.message); }
   const myName=getMyName();
   if(myName) document.getElementById("nav-title").textContent="⛳ "+myName;
   else setTimeout(()=>toast("💡 請先至「⚙️ 我的」設定你的名字",4000),800);

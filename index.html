@@ -10,7 +10,7 @@
 :root{
   --g1:#1b4332;--g2:#2d6a4f;--g3:#40916c;--g5:#d8f3dc;
   --r1:#c0392b;--r5:#fdecea;--b1:#1565c0;--b5:#e3f2fd;
-  --p1:#6a1b9a;--p5:#f3e5f5;
+  --p1:#6a1b9a;--p5:#f3e5f5;--o1:#e65100;--o5:#fff3e0;
   --ink:#1a1a1a;--sub:#666;--muted:#999;
   --border:#e8e8e8;--bg:#f4f6f4;--card:#fff;
   --radius:14px;--rsm:10px;
@@ -22,7 +22,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
 .nav-title{flex:1;font-size:17px;font-weight:900;color:#fff;letter-spacing:.5px}
 .nav-refresh{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;padding:7px 11px;font-size:16px;cursor:pointer}
 .tabs{display:flex;background:#fff;border-bottom:1.5px solid var(--border);position:sticky;top:53px;z-index:190}
-.tab{flex:1;padding:11px 2px 10px;text-align:center;font-size:12px;font-weight:700;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;letter-spacing:.3px}
+.tab{flex:1;padding:11px 2px 10px;text-align:center;font-size:11px;font-weight:700;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;letter-spacing:.3px}
 .tab.active{color:var(--g2);border-bottom-color:var(--g2)}
 .page{display:none;padding:14px 14px 80px;max-width:520px;margin:0 auto}
 .page.active{display:block}
@@ -30,7 +30,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
 .spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--g3);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 10px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{text-align:center;padding:40px 20px;color:var(--muted)}
-.empty-icon{font-size:40px;margin-bottom:10px}
 .sec{font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:18px 0 8px 2px}
 .sec:first-child{margin-top:2px}
 .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden}
@@ -38,18 +37,18 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
 .ds{padding:11px 14px;display:flex;align-items:center;gap:10px}
 .ds.dn{background:#fff5f5;border-left:4px solid var(--r1)}
 .ds.pl{background:var(--g5);border-left:4px solid var(--g3)}
+.ds.ex{background:#f5f5f5;border-left:4px solid var(--muted)}
 .ds-info{flex:1}
 .ds-name{font-size:15px;font-weight:900}
 .ds-stat{font-size:11px;color:var(--sub);margin-top:2px}
 .badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700}
 .b-ok{background:var(--g5);color:var(--g2)}
-.b-full{background:#f5f5f5;color:var(--muted)}
+.b-ex{background:#f5f5f5;color:var(--muted)}
 .pr{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid #f5f5f5;gap:8px;cursor:pointer}
 .pr:last-child{border-bottom:none}
-.pr:active{background:#f9f9f9;margin:0 -14px;padding:8px 14px}
 .pn{width:22px;height:22px;border-radius:50%;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .pn.r{background:var(--g2);color:#fff}
-.pn.w{background:#e65100;color:#fff}
+.pn.w{background:var(--o1);color:#fff}
 .pname{flex:1;font-size:14px;font-weight:500}
 .ptags{display:flex;gap:3px;flex-wrap:wrap}
 .tag{padding:2px 6px;border-radius:8px;font-size:10px;font-weight:700}
@@ -57,104 +56,198 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
 .t-d{background:var(--r5);color:var(--r1)}
 .t-b{background:var(--b5);color:var(--b1)}
 .t-p{background:var(--p5);color:var(--p1)}
-.t-wl{background:#fff3e0;color:#e65100}
+.t-wl{background:var(--o5);color:var(--o1)}
 .t-gs{background:#fff8e1;color:#f57f17}
 .edit-hint{font-size:10px;color:var(--muted);flex-shrink:0}
 .mg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:4px}
 .mb{padding:10px 4px;background:var(--card);border:1.5px solid var(--border);border-radius:var(--rsm);font-size:13px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s;color:var(--ink)}
-.mb:active,.mb.sel{background:var(--g5);border-color:var(--g3);color:var(--g1)}
-.btn{display:block;width:100%;padding:13px;border:none;border-radius:var(--rsm);font-size:14px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s;font-family:var(--font);letter-spacing:.3px}
-.btn:active{transform:scale(.97);opacity:.9}
+.mb:active{background:var(--g5);border-color:var(--g3);color:var(--g1)}
+.btn{display:block;width:100%;padding:13px;border:none;border-radius:var(--rsm);font-size:14px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s;font-family:var(--font)}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
 .btn+.btn{margin-top:7px}
 .bg{background:var(--g2);color:#fff}
 .br{background:var(--r1);color:#fff}
 .bb{background:var(--b1);color:#fff}
 .bp{background:var(--p1);color:#fff}
+.bo{background:var(--o1);color:#fff}
 .bm{background:#f0f0f0;color:var(--sub)}
 .brow{display:flex;gap:7px}
 .brow .btn{flex:1}
 .bsm{padding:9px;font-size:13px}
 .input{width:100%;padding:11px 14px;border:2px solid var(--border);border-radius:var(--rsm);font-size:15px;outline:none;font-family:var(--font);transition:border-color .2s}
 .input:focus{border-color:var(--g3)}
+.input:disabled{background:#f5f5f5;color:var(--muted)}
 .ilabel{font-size:12px;font-weight:700;color:var(--sub);margin-bottom:5px}
+.textarea{width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:var(--rsm);font-size:14px;outline:none;font-family:var(--font);resize:vertical;min-height:80px;transition:border-color .2s}
+.textarea:focus{border-color:var(--g3)}
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:flex-end;justify-content:center}
 .modal-bg.open{display:flex}
-.modal{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:520px;padding:20px 18px 32px;max-height:85vh;overflow-y:auto}
+.modal{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:520px;padding:20px 18px 32px;max-height:88vh;overflow-y:auto}
 .modal-title{font-size:16px;font-weight:900;margin-bottom:4px}
 .modal-sub{font-size:12px;color:var(--sub);margin-bottom:16px}
 .modal-close{float:right;background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer;margin-top:-4px}
 .srow{display:flex;align-items:center;background:var(--card);border-radius:var(--rsm);margin-bottom:8px;overflow:hidden;box-shadow:var(--shadow)}
 .snum{width:36px;text-align:center;font-size:12px;font-weight:900;color:var(--muted);flex-shrink:0}
 .sinput{flex:1;padding:12px 8px;border:none;outline:none;font-size:14px;font-family:var(--font);font-weight:500}
+.sinput:disabled{background:#f5f5f5;color:var(--muted)}
 .sclear{padding:12px 12px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px}
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.85);color:#fff;padding:11px 20px;border-radius:24px;font-size:13px;font-weight:500;z-index:999;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center}
 .toast.show{opacity:1}
 .dc .btn{font-size:13px;padding:11px}
+/* admin */
+.adm-tabs{display:flex;gap:8px;margin-bottom:14px}
+.adm-tab{flex:1;padding:9px;border:2px solid var(--border);border-radius:var(--rsm);font-size:12px;font-weight:700;color:var(--sub);background:#fff;cursor:pointer;text-align:center;transition:all .2s}
+.adm-tab.active{border-color:var(--g2);color:var(--g2);background:var(--g5)}
+.adm-page{display:none}
+.adm-page.active{display:block}
+.lock-banner{background:var(--r5);border:1px solid var(--r1);border-radius:var(--rsm);padding:12px 14px;margin-bottom:14px;font-size:13px;color:var(--r1);font-weight:600;text-align:center}
+.tee-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden}
+.tee-head{padding:11px 14px;display:flex;align-items:center;gap:8px}
+.tee-head.future{background:var(--g5);border-left:4px solid var(--g3)}
+.tee-head.past{background:#f5f5f5;border-left:4px solid var(--muted)}
+.tee-head.dinner{background:#fff5f5;border-left:4px solid var(--r1)}
+.tee-info{flex:1}
+.tee-date{font-size:15px;font-weight:900}
+.tee-stat{font-size:11px;color:var(--sub);margin-top:2px}
+.tee-actions{display:flex;gap:6px}
+.tee-btn{padding:6px 12px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font)}
+.tee-btn:disabled{opacity:.3;cursor:not-allowed}
+.tee-btn.edit{background:var(--b5);color:var(--b1)}
+.tee-btn.del{background:var(--r5);color:var(--r1)}
+.tee-note{padding:8px 14px 10px;font-size:12px;color:var(--sub);font-style:italic;border-top:1px solid var(--border)}
+.admin-row{display:grid;grid-template-columns:28px 1fr 1fr 28px;gap:6px;align-items:center;margin-bottom:8px}
+.admin-idx{font-size:12px;font-weight:900;color:var(--muted);text-align:center}
+.admin-input{padding:10px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:var(--font);outline:none;width:100%}
+.admin-input:focus{border-color:var(--g3)}
+.admin-input:disabled{background:#f5f5f5;color:var(--muted)}
+.admin-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:4px}
+.log-row{padding:10px 0;border-bottom:1px solid #f5f5f5;font-size:12px}
+.log-row:last-child{border-bottom:none}
+.log-time{color:var(--muted);font-size:11px;margin-bottom:3px}
+.log-body{display:flex;gap:8px;flex-wrap:wrap}
+.log-name{font-weight:700;color:var(--ink)}
+.log-uid{color:var(--sub);font-family:monospace;font-size:11px}
+.log-action{background:var(--b5);color:var(--b1);padding:1px 7px;border-radius:8px;font-weight:700}
+.log-detail{color:var(--sub)}
+.filter-row{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.filter-btn{padding:6px 12px;border:1.5px solid var(--border);border-radius:20px;font-size:12px;font-weight:700;color:var(--sub);background:#fff;cursor:pointer;transition:all .15s}
+.filter-btn.active{background:var(--g2);color:#fff;border-color:var(--g2)}
+.search-input{flex:1;min-width:120px;padding:7px 12px;border:1.5px solid var(--border);border-radius:20px;font-size:13px;outline:none;font-family:var(--font)}
+.search-input:focus{border-color:var(--g3)}
+.toggle-row{display:flex;align-items:center;gap:10px;padding:8px 0}
+.toggle-label{flex:1;font-size:14px;font-weight:500}
+.toggle{position:relative;width:46px;height:26px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:#ccc;border-radius:13px;cursor:pointer;transition:.3s}
+.toggle-slider:before{content:"";position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s}
+.toggle input:checked + .toggle-slider{background:var(--g3)}
+.toggle input:checked + .toggle-slider:before{transform:translateX(20px)}
 </style>
 </head>
 <body>
-
 <div class="nav">
   <span style="font-size:22px;line-height:1">⛳</span>
   <div class="nav-title" id="nav-title">高爾夫報名</div>
   <button class="nav-refresh" onclick="refresh()">🔄</button>
 </div>
-
-<div class="tabs">
+<div class="tabs" id="main-tabs">
   <button class="tab active" data-tab="register" onclick="switchTab(this)">📋 報名</button>
   <button class="tab" data-tab="roster" onclick="switchTab(this)">👥 名單</button>
   <button class="tab" data-tab="settings" onclick="switchTab(this)">⚙️ 我的</button>
+  <button class="tab" data-tab="admin" onclick="switchTab(this)">🔧 管理</button>
 </div>
 
+<!-- 報名頁 -->
 <div class="page active" id="page-register">
   <div id="reg-content"><div class="loading"><div class="spinner"></div>載入中...</div></div>
 </div>
+
+<!-- 名單頁 -->
 <div class="page" id="page-roster">
   <div id="roster-content"><div class="loading"><div class="spinner"></div>載入中...</div></div>
 </div>
+
+<!-- 我的設定 -->
 <div class="page" id="page-settings">
   <div id="settings-content"></div>
 </div>
 
+<!-- 管理頁 -->
+<div class="page" id="page-admin">
+  <div id="admin-lock-banner" class="lock-banner" style="display:none">
+    🔒 非管理者，功能已鎖定。輸入緊急密碼可解鎖。
+  </div>
+  <div class="adm-tabs">
+    <button class="adm-tab active" data-adm="tee" onclick="switchAdmTab(this)">⛳ 設定球敘</button>
+    <button class="adm-tab" data-adm="admins" onclick="switchAdmTab(this)">👑 管理者</button>
+    <button class="adm-tab" data-adm="logs" onclick="switchAdmTab(this)">📋 LOGS</button>
+  </div>
+  <div class="adm-page active" id="adm-tee"><div class="loading"><div class="spinner"></div></div></div>
+  <div class="adm-page" id="adm-admins"><div class="loading"><div class="spinner"></div></div></div>
+  <div class="adm-page" id="adm-logs"><div class="loading"><div class="spinner"></div></div></div>
+</div>
+
+<!-- Modal -->
 <div class="modal-bg" id="modal-bg" onclick="closeModal(event)">
-  <div class="modal" id="modal"><button class="modal-close" onclick="closeModal()">×</button><div id="modal-inner"></div></div>
+  <div class="modal"><button class="modal-close" onclick="closeModal()">×</button><div id="modal-inner"></div></div>
 </div>
 <div class="toast" id="toast"></div>
 
 <script>
-const API="https://golf-linebot-4wqe.onrender.com";
-const WD=["一","二","三","四","五","六","日"];
+const API = "https://golf-linebot-4wqe.onrender.com";
+const WD = ["一","二","三","四","五","六","日"];
+const EMERGENCY = "28746661";
 
-// Storage
-const S={
+const S = {
   get(k){try{return JSON.parse(localStorage.getItem(k))}catch{return null}},
   set(k,v){localStorage.setItem(k,JSON.stringify(v))}
 };
-const getMyName=()=>S.get("myName")||"";
-const getTeam=()=>S.get("myTeam")||Array(7).fill("");
-const getGuests=()=>S.get("myGuests")||Array(11).fill("");
+const getMyName = () => S.get("myName") || "";
+const getTeam = () => S.get("myTeam") || Array(7).fill("");
+const getGuests = () => S.get("myGuests") || Array(11).fill("");
 
-let scheduleData=[],rosterData=[],allMembers=[];
+let scheduleData=[], rosterData=[], allMembers=[];
+let isAdmin = false, adminChecked = false;
+let logDays = 7, logSearch = "", allLogs = [];
+let adminsData = [];
 
 function wdn(ds){const d=new Date(ds+"T00:00:00");return WD[d.getDay()===0?6:d.getDay()-1]}
 function mmdd(ds){const[,m,d]=ds.split("-");return m+"/"+d}
+function isExpired(ds){
+  const d = new Date(ds+"T06:00:00+08:00");
+  return new Date() > d;
+}
 
 function switchTab(el){
   document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   el.classList.add("active");
-  const tab=el.dataset.tab;
+  const tab = el.dataset.tab;
   document.getElementById("page-"+tab).classList.add("active");
-  if(tab==="register")loadRegister();
-  else if(tab==="roster")loadRoster();
-  else if(tab==="settings")renderSettings();
+  if(tab==="register") loadRegister();
+  else if(tab==="roster") loadRoster();
+  else if(tab==="settings") renderSettings();
+  else if(tab==="admin") loadAdmin();
+}
+
+function switchAdmTab(el){
+  document.querySelectorAll(".adm-tab").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll(".adm-page").forEach(p=>p.classList.remove("active"));
+  el.classList.add("active");
+  const adm = el.dataset.adm;
+  document.getElementById("adm-"+adm).classList.add("active");
+  if(adm==="tee") renderAdmTee();
+  else if(adm==="admins") renderAdmAdmins();
+  else if(adm==="logs") loadAdmLogs();
 }
 
 function refresh(){
   scheduleData=[];rosterData=[];
-  const t=document.querySelector(".tab.active").dataset.tab;
-  if(t==="register")loadRegister();
-  else if(t==="roster")loadRoster();
+  const t = document.querySelector(".tab.active").dataset.tab;
+  if(t==="register") loadRegister();
+  else if(t==="roster") loadRoster();
+  else if(t==="admin") loadAdmin();
 }
 
 function toast(msg,ms=2500){
@@ -165,23 +258,23 @@ function toast(msg,ms=2500){
 
 async function apiFetch(path,opts={}){
   const r=await fetch(API+path,{...opts,headers:{"Content-Type":"application/json",...(opts.headers||{})}});
-  if(!r.ok)throw new Error("HTTP "+r.status);
+  if(!r.ok) throw new Error("HTTP "+r.status);
   return r.json();
 }
 
 function dtags(dtype){
-  if(dtype==="both")return'<span class="tag t-b">打球+餐</span>';
-  if(dtype==="golf_only")return'<span class="tag t-g">打球</span>';
-  if(dtype==="dinner_only")return'<span class="tag t-d">餐敘</span>';
-  return"";
+  if(dtype==="both") return '<span class="tag t-b">打球+餐</span>';
+  if(dtype==="golf_only") return '<span class="tag t-g">打球</span>';
+  if(dtype==="dinner_only") return '<span class="tag t-d">餐敘</span>';
+  return "";
 }
 
-// ── 載入報名頁 ──
+// ══ 報名頁 ══
 async function loadRegister(){
   const el=document.getElementById("reg-content");
   el.innerHTML='<div class="loading"><div class="spinner"></div>載入中...</div>';
   try{
-    const[s,r,m]=await Promise.all([
+    const [s,r,m] = await Promise.all([
       apiFetch("/api/schedule-public"),
       apiFetch("/api/registrations-public"),
       apiFetch("/api/members-public")
@@ -190,17 +283,15 @@ async function loadRegister(){
     rosterData=r.dates||[];
     allMembers=m.members||[];
     renderRegister();
-  }catch(e){el.innerHTML='<div class="empty"><div class="empty-icon">⚠️</div>載入失敗，請重試</div>'}
+  }catch(e){ el.innerHTML='<div class="empty">⚠️ 載入失敗，請重試</div>'; }
 }
 
 function renderRegister(){
   const el=document.getElementById("reg-content");
-  const myName=getMyName();
-  const team=getTeam().filter(Boolean);
-  const guests=getGuests().filter(Boolean);
+  const myName=getMyName(), team=getTeam().filter(Boolean), guests=getGuests().filter(Boolean);
   const allMine=[myName,...team].filter(Boolean);
   const now=new Date();
-  const mon=new Date(now);mon.setDate(now.getDate()-(now.getDay()===0?6:now.getDay()-1));mon.setHours(0,0,0,0);
+  const mon=new Date(now); mon.setDate(now.getDate()-(now.getDay()===0?6:now.getDay()-1)); mon.setHours(0,0,0,0);
   const guestOk=now>=mon;
   let html="";
 
@@ -208,10 +299,10 @@ function renderRegister(){
   html+='<div class="sec">已報名狀況</div>';
   let anyReg=false;
   for(const d of rosterData){
-    const myRegs=d.players.filter(p=>allMine.includes(p.name)&&!p.is_waitlist&&!p.is_guest);
-    const myGs=d.players.filter(p=>guests.includes(p.name)&&p.is_guest&&!p.is_waitlist);
-    const combined=[...myRegs,...myGs];
-    if(!combined.length)continue;
+    const myR=d.players.filter(p=>allMine.includes(p.name)&&!p.is_waitlist&&!p.is_guest);
+    const myG=d.players.filter(p=>guests.includes(p.name)&&p.is_guest&&!p.is_waitlist);
+    const combined=[...myR,...myG];
+    if(!combined.length) continue;
     anyReg=true;
     html+=`<div class="card">
     <div class="ds ${d.has_dinner?'dn':'pl'}">
@@ -220,7 +311,7 @@ function renderRegister(){
         <div class="ds-stat">全場已報名 ${d.players.filter(p=>!p.is_waitlist).length} 人</div>
       </div>
     </div>
-    <div class="card-body"><div class="player-list">
+    <div class="card-body"><div>
     ${combined.map((p,i)=>`<div class="pr" onclick="showEditModal('${p.name}','${d.play_date}',${p.is_guest},'${p.reg_id||''}','${p.dinner_type||''}',${d.has_dinner})">
       <div class="pn r">${i+1}</div>
       <div class="pname">${p.name}${p.is_guest?'<span class="tag t-gs" style="margin-left:4px">來賓</span>':''}</div>
@@ -229,15 +320,15 @@ function renderRegister(){
     </div>`).join("")}
     </div></div></div>`;
   }
-  if(!anyReg)html+='<div class="card"><div class="card-body" style="color:var(--muted);font-size:13px;text-align:center;padding:18px">尚未報名任何場次</div></div>';
+  if(!anyReg) html+='<div class="card"><div class="card-body" style="color:var(--muted);font-size:13px;text-align:center;padding:18px">尚未報名任何場次</div></div>';
 
   // 常用隊員
   html+='<div class="sec">常用隊員</div>';
   if(team.length){
     html+='<div class="card"><div class="card-body"><div class="mg">';
-    for(const n of team)html+=`<button class="mb" onclick="showRegModal('${n}',false)">${n}</button>`;
+    for(const n of team) html+=`<button class="mb" onclick="showRegModal('${n}',false)">${n}</button>`;
     html+='</div></div></div>';
-  }else{
+  } else {
     html+='<div class="card"><div class="card-body" style="color:var(--muted);font-size:13px;text-align:center;padding:16px">請至「⚙️ 我的」設定常用隊員</div></div>';
   }
 
@@ -245,18 +336,16 @@ function renderRegister(){
   html+='<div class="sec">常用來賓</div>';
   if(!guestOk){
     html+='<div class="card"><div class="card-body" style="color:var(--muted);font-size:12px;text-align:center;padding:16px">週一 00:00 後開放來賓報名</div></div>';
-  }else if(guests.length){
+  } else if(guests.length){
     html+='<div class="card"><div class="card-body"><div class="mg">';
-    for(const n of guests)html+=`<button class="mb" onclick="showRegModal('${n}',true)">${n}</button>`;
+    for(const n of guests) html+=`<button class="mb" onclick="showRegModal('${n}',true)">${n}</button>`;
     html+='</div></div></div>';
-  }else{
+  } else {
     html+='<div class="card"><div class="card-body" style="color:var(--muted);font-size:13px;text-align:center;padding:16px">請至「⚙️ 我的」設定常用來賓</div></div>';
   }
-
   el.innerHTML=html;
 }
 
-// ── 報名 Modal ──
 function showRegModal(name,isGuest){
   if(!scheduleData.length){toast("⚠️ 請先載入場次");return}
   let html=`<div class="modal-title">${name}</div>
@@ -264,7 +353,7 @@ function showRegModal(name,isGuest){
   for(const d of scheduleData){
     const wd=wdn(d.play_date);
     const roster=rosterData.find(r=>r.play_date===d.play_date);
-    const alreadyReg=roster&&roster.players.some(p=>p.name===name&&!p.is_waitlist&&(isGuest?p.is_guest:!p.is_guest));
+    const already=roster&&roster.players.some(p=>p.name===name&&!p.is_waitlist&&(isGuest?p.is_guest:!p.is_guest));
     const remain=Math.max(0,(d.max_players||0)-d.registered);
     html+=`<div class="card" style="margin-bottom:10px">
     <div class="ds ${d.has_dinner?'dn':'pl'}">
@@ -272,19 +361,19 @@ function showRegModal(name,isGuest){
         <div class="ds-name">${mmdd(d.play_date)} 星期${wd}${d.has_dinner?' 🍽️':''}</div>
         <div class="ds-stat">已報名 ${d.registered} 人 | 剩 ${remain} 位</div>
       </div>
-      ${alreadyReg?'<span class="badge b-ok">✓ 已報名</span>':''}
+      ${already?'<span class="badge b-ok">✓ 已報名</span>':''}
     </div>
     <div class="card-body">`;
-    if(alreadyReg){
+    if(already){
       const reg=roster.players.find(p=>p.name===name&&(isGuest?p.is_guest:!p.is_guest));
       html+=`<button class="btn br bsm" onclick="doCancel('${name}','${d.play_date}',${isGuest},'${reg?.reg_id||''}');closeModal()">✖ 取消報名</button>`;
-    }else if(d.has_dinner){
+    } else if(d.has_dinner){
       html+=`<div class="dc">
         <button class="btn bb bsm" onclick="doReg('${name}','${d.play_date}','both',${isGuest});closeModal()">⛳🍽️ 打球＋餐敘</button>
         <button class="btn bg bsm" onclick="doReg('${name}','${d.play_date}','golf_only',${isGuest});closeModal()">⛳ 打球不餐敘</button>
         <button class="btn bp bsm" onclick="doReg('${name}','${d.play_date}','dinner_only',${isGuest});closeModal()">🍽️ 餐敘不打球</button>
       </div>`;
-    }else{
+    } else {
       html+=`<button class="btn bg bsm" onclick="doReg('${name}','${d.play_date}','',${isGuest});closeModal()">✅ 報名</button>`;
     }
     html+='</div></div>';
@@ -303,58 +392,55 @@ function showEditModal(name,playDate,isGuest,regId,dinnerType,hasDinner){
       <button class="btn bg bsm" onclick="doReg('${name}','${playDate}','golf_only',${isGuest});closeModal()">⛳ 打球不餐敘</button>
       <button class="btn bp bsm" onclick="doReg('${name}','${playDate}','dinner_only',${isGuest});closeModal()">🍽️ 餐敘不打球</button>
     </div><div style="margin-top:10px">`;
-  }else html+='<div>';
+  } else html+='<div>';
   html+=`<button class="btn br bsm" onclick="doCancel('${name}','${playDate}',${isGuest},'${regId}');closeModal()">✖ 取消報名</button></div>`;
   openModal(html);
 }
 
 async function doReg(name,playDate,dinnerType,isGuest){
-  const myName=getMyName();
-  toast("報名中...");
+  const myName=getMyName(); toast("報名中...");
   try{
     const res=await apiFetch("/api/register-by-name",{method:"POST",body:JSON.stringify({
-      name,play_date:playDate,dinner_type:dinnerType,
-      operator:myName||name,is_guest:isGuest,invited_by:myName||""
+      name,play_date:playDate,dinner_type:dinnerType,operator:myName||name,is_guest:isGuest,invited_by:myName||""
     })});
-    if(res.status==="success")toast(res.info?.is_waitlist?`✅ ${name} 加入候補`:`✅ ${name} 報名成功`);
-    else if(res.status==="already_registered")toast(`⚠️ ${name} 已報名此場次`);
-    else if(res.status==="member_not_found")toast(`⚠️ 找不到成員「${name}」`);
+    if(res.status==="success") toast(res.info?.is_waitlist?`✅ ${name} 加入候補`:`✅ ${name} 報名成功`);
+    else if(res.status==="already_registered") toast(`⚠️ ${name} 已報名此場次`);
+    else if(res.status==="member_not_found") toast(`⚠️ 找不到成員「${name}」`);
     else toast("⚠️ "+res.status);
-    await reloadData();renderRegister();
-  }catch(e){toast("❌ 報名失敗")}
+    await reloadData(); renderRegister();
+  }catch(e){ toast("❌ 報名失敗"); }
 }
 
 async function doCancel(name,playDate,isGuest,regId){
-  const myName=getMyName();
-  toast("取消中...");
+  const myName=getMyName(); toast("取消中...");
   try{
     const res=await apiFetch("/api/cancel-by-name",{method:"POST",body:JSON.stringify({
       name,play_date:playDate,is_guest:isGuest,reg_id:regId,operator:myName||name
     })});
     toast(res.status==="cancelled"||res.status==="success"?`✅ ${name} 取消成功`:"⚠️ "+res.status);
-    await reloadData();renderRegister();
-  }catch(e){toast("❌ 取消失敗")}
+    await reloadData(); renderRegister();
+  }catch(e){ toast("❌ 取消失敗"); }
 }
 
 async function reloadData(){
-  const[s,r]=await Promise.all([apiFetch("/api/schedule-public"),apiFetch("/api/registrations-public")]);
-  scheduleData=s.dates||[];rosterData=r.dates||[];
+  const [s,r]=await Promise.all([apiFetch("/api/schedule-public"),apiFetch("/api/registrations-public")]);
+  scheduleData=s.dates||[]; rosterData=r.dates||[];
 }
 
-// ── 名單頁 ──
+// ══ 名單頁 ══
 async function loadRoster(){
   const el=document.getElementById("roster-content");
   el.innerHTML='<div class="loading"><div class="spinner"></div>載入中...</div>';
   try{
     const r=await apiFetch("/api/registrations-public");
-    rosterData=r.dates||[];renderRoster();
-  }catch(e){el.innerHTML='<div class="empty"><div class="empty-icon">⚠️</div>載入失敗</div>'}
+    rosterData=r.dates||[]; renderRoster();
+  }catch(e){ el.innerHTML='<div class="empty">⚠️ 載入失敗</div>'; }
 }
 
 function renderRoster(){
   const el=document.getElementById("roster-content");
   const nonempty=rosterData.filter(d=>d.players.length>0);
-  if(!nonempty.length){el.innerHTML='<div class="empty"><div class="empty-icon">📋</div>本週尚無報名</div>';return}
+  if(!nonempty.length){el.innerHTML='<div class="empty"><div style="font-size:40px;margin-bottom:10px">📋</div>本週尚無報名</div>';return}
   let html="";
   for(const d of nonempty){
     const reg=d.players.filter(p=>!p.is_waitlist);
@@ -366,11 +452,13 @@ function renderRoster(){
         <div class="ds-stat">報名 ${reg.length} 人${wl.length?" | 候補 "+wl.length+" 人":""}</div>
       </div>
     </div>
-    <div class="card-body"><div class="player-list">
+    <div class="card-body"><div>
     ${reg.map((p,i)=>`<div class="pr">
       <div class="pn r">${i+1}</div>
-      <div class="pname">${p.name}${p.is_guest?'<span class="tag t-gs" style="margin-left:4px">來賓</span>':''}</div>
-      <div class="ptags">${dtags(p.dinner_type)}</div>
+      <div class="pname">${p.is_guest
+        ? p.name+' / 來賓 / '+(p.invited_by||'')
+        : p.name}</div>
+      <div class="ptags">${p.is_guest?'<span class="tag t-gs">來賓</span>':''}${dtags(p.dinner_type)}</div>
     </div>`).join("")}
     ${wl.length?'<div style="font-size:11px;font-weight:900;color:var(--muted);margin:8px 0 4px">候補</div>':''}
     ${wl.map((p,i)=>`<div class="pr">
@@ -383,9 +471,9 @@ function renderRoster(){
   el.innerHTML=html;
 }
 
-// ── 設定頁 ──
+// ══ 設定頁 ══
 function renderSettings(){
-  const myName=getMyName(),team=getTeam(),guests=getGuests();
+  const myName=getMyName(), team=getTeam(), guests=getGuests();
   let html=`
   <div class="sec">我自己</div>
   <div class="card"><div class="card-body">
@@ -411,12 +499,12 @@ function renderSettings(){
   });
   html+='<div style="height:24px"></div>';
   document.getElementById("settings-content").innerHTML=html;
-  if(myName)document.getElementById("nav-title").textContent="⛳ "+myName;
+  if(myName) document.getElementById("nav-title").textContent="⛳ "+myName;
   if(!allMembers.length){
     apiFetch("/api/members-public").then(r=>{
       allMembers=r.members||[];
       const dl=document.getElementById("ml");
-      if(dl)dl.innerHTML=allMembers.map(m=>`<option value="${m}">`).join('');
+      if(dl) dl.innerHTML=allMembers.map(m=>`<option value="${m}">`).join('');
     }).catch(()=>{});
   }
 }
@@ -427,13 +515,365 @@ function clearTeam(i){const t=getTeam();t[i]="";S.set("myTeam",t);renderSettings
 function saveGuest(i,v){const g=getGuests();g[i]=v.trim();S.set("myGuests",g);toast("✅ 已儲存");renderSettings()}
 function clearGuest(i){const g=getGuests();g[i]="";S.set("myGuests",g);renderSettings()}
 
-function openModal(html){document.getElementById("modal-inner").innerHTML=html;document.getElementById("modal-bg").classList.add("open")}
-function closeModal(e){if(!e||e.target===document.getElementById("modal-bg"))document.getElementById("modal-bg").classList.remove("open")}
+// ══ 管理頁 ══
+let teeTimes=[], schedulable=[];
 
-// 初始化
+async function loadAdmin(){
+  const myName=getMyName();
+  // 先查管理者身份
+  if(!adminChecked){
+    try{
+      const res=await apiFetch("/api/admin/check",{method:"POST",body:JSON.stringify({name:myName,code:""})});
+      isAdmin=res.is_admin||false;
+    }catch(e){isAdmin=false;}
+    adminChecked=true;
+  }
+  const banner=document.getElementById("admin-lock-banner");
+  banner.style.display=isAdmin?"none":"block";
+  // 載入管理者列表
+  try{
+    const r=await apiFetch("/api/admin/admins");
+    adminsData=r.admins||[];
+  }catch(e){}
+  // 載入球敘
+  try{
+    const [tee,sched]=await Promise.all([
+      apiFetch("/api/admin/tee-times"),
+      apiFetch("/api/admin/schedulable-dates")
+    ]);
+    teeTimes=tee.tee_times||[];
+    schedulable=sched.dates||[];
+  }catch(e){}
+  renderAdmTee();
+}
+
+function renderAdmTee(){
+  const el=document.getElementById("adm-tee");
+  const dis=!isAdmin?"disabled":"";
+  let html="";
+
+  // 新增球敘按鈕
+  html+=`<button class="btn bg" style="margin-bottom:14px" ${dis} onclick="showAddTeeModal()">＋ 新增球敘</button>`;
+
+  // 球敘列表
+  if(!teeTimes.length){
+    html+='<div class="empty">尚無球敘資料</div>';
+  } else {
+    // 時間軸排序（最近在前）
+    const sorted=[...teeTimes].sort((a,b)=>a.play_date.localeCompare(b.play_date));
+    for(const t of sorted){
+      const exp=isExpired(t.play_date);
+      const cls=exp?'past':(t.has_dinner?'dinner':'future');
+      html+=`<div class="tee-card">
+      <div class="tee-head ${cls}">
+        <div class="tee-info">
+          <div class="tee-date">${mmdd(t.play_date)} 星期${wdn(t.play_date)}${t.has_dinner?' 🍽️':''}${exp?' <span class="badge b-ex">過期</span>':''}</div>
+          <div class="tee-stat">${t.max_groups} 組（${t.max_players} 人）｜已報名 ${t.registered} 人</div>
+        </div>
+        <div class="tee-actions">
+          <button class="tee-btn edit" ${dis} onclick="showEditTeeModal('${t.play_date}',${t.max_groups},${t.has_dinner},'${(t.note||"").replace(/'/g,"\'")}')">修改</button>
+          <button class="tee-btn del" ${dis} onclick="deleteTee('${t.play_date}')">刪除</button>
+        </div>
+      </div>
+      ${t.note?`<div class="tee-note">📝 ${t.note}</div>`:''}
+      </div>`;
+    }
+  }
+  el.innerHTML=html;
+}
+
+function showAddTeeModal(){
+  if(!isAdmin){toast("⚠️ 非管理者");return}
+  const opts=schedulable.map(d=>`<option value="${d}">${mmdd(d)} 星期${wdn(d)}</option>`).join("");
+  let html=`<div class="modal-title">＋ 新增球敘</div>
+  <div class="modal-sub">選擇日期與設定</div>
+  <div class="ilabel">日期</div>
+  <select class="input" id="tee-date" style="margin-bottom:10px">${opts}</select>
+  <div class="ilabel">組數</div>
+  <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap" id="group-btns">
+    ${[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20].map(n=>`<button class="tee-btn edit" style="font-size:13px;padding:7px 10px" onclick="selectGroups(${n},this)">${n}</button>`).join("")}
+  </div>
+  <input type="hidden" id="tee-groups" value="0">
+  <div class="toggle-row">
+    <div class="toggle-label">含餐敘</div>
+    <label class="toggle"><input type="checkbox" id="tee-dinner"><span class="toggle-slider"></span></label>
+  </div>
+  <div class="ilabel" style="margin-top:10px">備註（選填）</div>
+  <div style="display:flex;gap:6px;margin-bottom:4px">
+    <button class="tee-btn edit bsm" onclick="document.getElementById('tee-note').value=''">清空</button>
+    <button class="tee-btn edit bsm" onclick="pasteNote()">貼上</button>
+    <button class="tee-btn edit bsm" onclick="copyNote()">全選複製</button>
+  </div>
+  <textarea class="textarea" id="tee-note" placeholder="輸入備註說明..."></textarea>
+  <button class="btn bg" style="margin-top:14px" onclick="submitAddTee()">✅ 確認新增</button>`;
+  openModal(html);
+}
+
+function selectGroups(n,el){
+  document.querySelectorAll("#group-btns .tee-btn").forEach(b=>b.style.background="");
+  el.style.background="var(--g3)"; el.style.color="#fff";
+  document.getElementById("tee-groups").value=n;
+}
+
+async function pasteNote(){
+  try{
+    const t=await navigator.clipboard.readText();
+    document.getElementById("tee-note").value=t;
+  }catch{toast("⚠️ 無法存取剪貼簿")}
+}
+
+function copyNote(){
+  const ta=document.getElementById("tee-note");
+  ta.select();
+  document.execCommand("copy");
+  toast("✅ 已複製");
+}
+
+async function submitAddTee(){
+  const playDate=document.getElementById("tee-date").value;
+  const maxGroups=parseInt(document.getElementById("tee-groups").value||"0");
+  const hasDinner=document.getElementById("tee-dinner").checked;
+  const note=document.getElementById("tee-note").value.trim();
+  if(!playDate||maxGroups<=0){toast("⚠️ 請選擇組數");return}
+  try{
+    await apiFetch("/api/admin/set-tee",{method:"POST",body:JSON.stringify({
+      operator:getMyName(),play_date:playDate,max_groups:maxGroups,has_dinner:hasDinner,note
+    })});
+    toast("✅ 球敘設定成功");
+    closeModal();
+    const tee=await apiFetch("/api/admin/tee-times");
+    teeTimes=tee.tee_times||[];
+    renderAdmTee();
+    // 同時更新報名頁資料
+    scheduleData=[];
+  }catch(e){toast("❌ 設定失敗")}
+}
+
+function showEditTeeModal(playDate,maxGroups,hasDinner,note){
+  if(!isAdmin){toast("⚠️ 非管理者");return}
+  let html=`<div class="modal-title">修改球敘</div>
+  <div class="modal-sub">${mmdd(playDate)} 星期${wdn(playDate)}</div>
+  <div class="ilabel">組數</div>
+  <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap" id="edit-group-btns">
+    ${[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20].map(n=>`<button class="tee-btn edit" style="font-size:13px;padding:7px 10px;${n===maxGroups?'background:var(--g3);color:#fff':''}" onclick="selectEditGroups(${n},this)">${n}</button>`).join("")}
+  </div>
+  <input type="hidden" id="edit-groups" value="${maxGroups}">
+  <div class="toggle-row">
+    <div class="toggle-label">含餐敘</div>
+    <label class="toggle"><input type="checkbox" id="edit-dinner" ${hasDinner?"checked":""}><span class="toggle-slider"></span></label>
+  </div>
+  <div class="ilabel" style="margin-top:10px">備註</div>
+  <div style="display:flex;gap:6px;margin-bottom:4px">
+    <button class="tee-btn edit bsm" onclick="document.getElementById('edit-note').value=''">清空</button>
+    <button class="tee-btn edit bsm" onclick="pasteEditNote()">貼上</button>
+    <button class="tee-btn edit bsm" onclick="copyEditNote()">全選複製</button>
+  </div>
+  <textarea class="textarea" id="edit-note" placeholder="備註...">${note}</textarea>
+  <button class="btn bg" style="margin-top:14px" onclick="submitEditTee('${playDate}')">✅ 確認修改</button>`;
+  openModal(html);
+}
+
+function selectEditGroups(n,el){
+  document.querySelectorAll("#edit-group-btns .tee-btn").forEach(b=>{b.style.background="";b.style.color=""});
+  el.style.background="var(--g3)"; el.style.color="#fff";
+  document.getElementById("edit-groups").value=n;
+}
+
+async function pasteEditNote(){
+  try{const t=await navigator.clipboard.readText();document.getElementById("edit-note").value=t;}
+  catch{toast("⚠️ 無法存取剪貼簿")}
+}
+function copyEditNote(){
+  const ta=document.getElementById("edit-note");ta.select();document.execCommand("copy");toast("✅ 已複製");
+}
+
+async function submitEditTee(playDate){
+  const maxGroups=parseInt(document.getElementById("edit-groups").value||"0");
+  const hasDinner=document.getElementById("edit-dinner").checked;
+  const note=document.getElementById("edit-note").value.trim();
+  if(maxGroups<=0){toast("⚠️ 請選擇組數");return}
+  try{
+    await apiFetch("/api/admin/update-tee",{method:"POST",body:JSON.stringify({
+      operator:getMyName(),play_date:playDate,max_groups:maxGroups,has_dinner:hasDinner,note
+    })});
+    toast("✅ 修改成功");
+    closeModal();
+    const tee=await apiFetch("/api/admin/tee-times");
+    teeTimes=tee.tee_times||[]; renderAdmTee();
+    scheduleData=[];
+  }catch(e){toast("❌ 修改失敗")}
+}
+
+async function deleteTee(playDate){
+  if(!confirm(`確定刪除 ${mmdd(playDate)} 星期${wdn(playDate)} 的球敘？`)) return;
+  try{
+    await apiFetch("/api/admin/delete-tee",{method:"POST",body:JSON.stringify({operator:getMyName(),play_date:playDate})});
+    toast("✅ 已刪除");
+    const tee=await apiFetch("/api/admin/tee-times");
+    teeTimes=tee.tee_times||[]; renderAdmTee();
+    scheduleData=[];
+  }catch(e){toast("❌ 刪除失敗")}
+}
+
+// ══ 管理者設定 ══
+function renderAdmAdmins(){
+  const el=document.getElementById("adm-admins");
+  const dis=!isAdmin?"disabled":"";
+  const MAX=6;
+  // 確保有6行
+  while(adminsData.length<MAX) adminsData.push({display_name:"",line_user_id:""});
+  const rows=adminsData.slice(0,MAX);
+
+  let html=`<div class="sec">管理者名單（最多6位）</div>
+  <div style="display:grid;grid-template-columns:28px 1fr 1fr 28px;gap:6px;margin-bottom:6px">
+    <div></div>
+    <div style="font-size:11px;font-weight:900;color:var(--muted);padding:0 4px">本名</div>
+    <div style="font-size:11px;font-weight:900;color:var(--muted);padding:0 4px">Line ID</div>
+    <div></div>
+  </div>`;
+
+  rows.forEach((a,i)=>{
+    html+=`<div class="admin-row">
+      <div class="admin-idx">${i+1}</div>
+      <input class="admin-input" placeholder="本名" value="${a.display_name||''}" ${dis} oninput="updateAdmin(${i},'display_name',this.value)">
+      <input class="admin-input" placeholder="U..." value="${a.line_user_id||''}" ${dis} oninput="updateAdmin(${i},'line_user_id',this.value)">
+      <button class="admin-del" ${dis} onclick="clearAdmin(${i})">×</button>
+    </div>`;
+  });
+
+  html+=`<button class="btn bg" style="margin-top:12px" ${dis} onclick="saveAdmins()">💾 儲存管理者名單</button>`;
+
+  // 緊急解鎖
+  html+=`<div style="margin-top:24px;padding-top:16px;border-top:1px dashed var(--border)">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px">緊急解鎖（輸入密碼後按解鎖）</div>
+    <div style="display:flex;gap:8px">
+      <input class="input" id="emergency-input" placeholder="28746661" style="flex:1" oninput="this.dataset.changed='1'">
+      <button class="btn bo bsm" style="flex:0;white-space:nowrap;padding:9px 16px" onclick="emergencyUnlock()">緊急修改</button>
+    </div>
+  </div>`;
+
+  el.innerHTML=html;
+  // 每次進入重設緊急密碼欄位
+  setTimeout(()=>{
+    const inp=document.getElementById("emergency-input");
+    if(inp) inp.value="28746661";
+  },0);
+}
+
+function updateAdmin(i,field,val){
+  if(!adminsData[i]) adminsData[i]={display_name:"",line_user_id:""};
+  adminsData[i][field]=val.trim();
+}
+
+function clearAdmin(i){
+  if(!isAdmin){toast("⚠️ 非管理者");return}
+  adminsData[i]={display_name:"",line_user_id:""};
+  renderAdmAdmins();
+}
+
+async function saveAdmins(){
+  if(!isAdmin){toast("⚠️ 非管理者");return}
+  const valid=adminsData.filter(a=>a.display_name&&a.line_user_id);
+  try{
+    await apiFetch("/api/admin/save-admins",{method:"POST",body:JSON.stringify({
+      operator:getMyName(),admins:valid
+    })});
+    toast("✅ 管理者名單已儲存");
+    // 重新驗證身份
+    adminChecked=false;
+    await loadAdmin();
+  }catch(e){toast("❌ 儲存失敗")}
+}
+
+async function emergencyUnlock(){
+  const inp=document.getElementById("emergency-input");
+  const code=(inp?.value||"").trim();
+  if(code===EMERGENCY){
+    isAdmin=true;
+    adminChecked=true;
+    document.getElementById("admin-lock-banner").style.display="none";
+    toast("🔓 已緊急解鎖");
+    renderAdmTee();
+    renderAdmAdmins();
+  } else {
+    toast("❌ 密碼錯誤");
+  }
+}
+
+// ══ LOGS ══
+async function loadAdmLogs(){
+  const el=document.getElementById("adm-logs");
+  el.innerHTML='<div class="loading"><div class="spinner"></div>載入中...</div>';
+  try{
+    const r=await apiFetch(`/api/admin/logs?days=${logDays}`);
+    allLogs=r.logs||[];
+    renderAdmLogs();
+  }catch(e){ el.innerHTML='<div class="empty">⚠️ 載入失敗</div>'; }
+}
+
+function renderAdmLogs(){
+  const el=document.getElementById("adm-logs");
+  const days=[1,3,7,10,30];
+  let html=`<div class="filter-row">
+    ${days.map(d=>`<button class="filter-btn ${d===logDays?'active':''}" onclick="setLogDays(${d})">${d}天</button>`).join("")}
+    <button class="filter-btn ${logDays===999?'active':''}" onclick="setLogDays(999)">全部(30)</button>
+  </div>
+  <input class="search-input" placeholder="🔍 關鍵字篩選..." value="${logSearch}" oninput="setLogSearch(this.value)">
+  <div style="margin-top:10px">`;
+
+  const filtered=allLogs.filter(l=>{
+    if(!logSearch) return true;
+    const s=logSearch.toLowerCase();
+    return (l.display_name||"").toLowerCase().includes(s) ||
+           (l.action||"").toLowerCase().includes(s) ||
+           (l.detail||"").toLowerCase().includes(s) ||
+           (l.line_user_id||"").toLowerCase().includes(s);
+  });
+
+  if(!filtered.length){
+    html+='<div class="empty">無符合紀錄</div>';
+  } else {
+    for(const l of filtered){
+      const dt=l.created_at?(new Date(l.created_at)).toLocaleString("zh-TW",{timeZone:"Asia/Taipei",hour12:false,month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}):"";
+      html+=`<div class="log-row">
+        <div class="log-time">${dt}</div>
+        <div class="log-body">
+          <span class="log-name">${l.display_name||""}</span>
+          <span class="log-uid">${(l.line_user_id||"").substring(0,12)}</span>
+          <span class="log-action">${l.action||""}</span>
+          <span class="log-detail">${l.detail||""}</span>
+        </div>
+      </div>`;
+    }
+  }
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+function setLogDays(d){
+  logDays=d;
+  loadAdmLogs();
+}
+
+function setLogSearch(v){
+  logSearch=v;
+  renderAdmLogs();
+}
+
+// ══ Modal ══
+function openModal(html){
+  document.getElementById("modal-inner").innerHTML=html;
+  document.getElementById("modal-bg").classList.add("open");
+}
+function closeModal(e){
+  if(!e||e.target===document.getElementById("modal-bg"))
+    document.getElementById("modal-bg").classList.remove("open");
+}
+
+// ══ 初始化 ══
 (async()=>{
   const myName=getMyName();
-  if(myName)document.getElementById("nav-title").textContent="⛳ "+myName;
+  if(myName) document.getElementById("nav-title").textContent="⛳ "+myName;
   else setTimeout(()=>toast("💡 請先至「⚙️ 我的」設定你的名字",4000),800);
   await loadRegister();
 })();

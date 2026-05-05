@@ -437,17 +437,30 @@ async function loadRoster(){
   const el=document.getElementById("roster-content");
   el.innerHTML='<div class="loading"><div class="spinner"></div>載入中...</div>';
   try{
-    const r=await apiFetch("/api/registrations-public");
-    rosterData=r.dates||[]; renderRoster();
+    const [s,r]=await Promise.all([
+      apiFetch("/api/schedule-public"),
+      apiFetch("/api/registrations-public")
+    ]);
+    scheduleData=s.dates||[];
+    rosterData=r.dates||[];
+    renderRoster();
   }catch(e){ el.innerHTML='<div class="empty">⚠️ 載入失敗</div>'; }
 }
 
 function renderRoster(){
   const el=document.getElementById("roster-content");
-  const nonempty=rosterData.filter(d=>d.players.length>0);
-  if(!nonempty.length){el.innerHTML='<div class="empty"><div style="font-size:40px;margin-bottom:10px">📋</div>本週尚無報名</div>';return}
+  // 用 scheduleData 為主，確保所有開放場次都顯示
+  const allDates = scheduleData.length ? scheduleData.map(s=>s.play_date) :
+                   rosterData.map(r=>r.play_date);
+  if(!allDates.length){el.innerHTML='<div class="empty"><div style="font-size:40px;margin-bottom:10px">📋</div>本週尚無場次</div>';return}
   let html="";
-  for(const d of nonempty){
+  for(const play_date of allDates){
+    const d = rosterData.find(r=>r.play_date===play_date) ||
+              {play_date, has_dinner: scheduleData.find(s=>s.play_date===play_date)?.has_dinner||false, players:[]};
+    const sched = scheduleData.find(s=>s.play_date===play_date);
+    d.note = sched?.note || "";
+    d.max_players = sched?.max_players || 0;
+    d.registered_count = sched?.registered || 0;
     const reg=d.players.filter(p=>!p.is_waitlist);
     const wl=d.players.filter(p=>p.is_waitlist);
     html+=`<div class="card" style="margin-bottom:12px">
@@ -455,7 +468,7 @@ function renderRoster(){
       <div class="ds-info">
         <div class="ds-name">${mmdd(d.play_date)} 星期${wdn(d.play_date)}${d.has_dinner?' 🍽️':''}</div>
         ${d.note?`<div style="font-size:12px;color:var(--sub);margin-top:2px;font-style:italic">📝 ${d.note}</div>`:''}
-        <div class="ds-stat">報名 ${reg.length} 人${wl.length?" | 候補 "+wl.length+" 人":""}</div>
+        <div class="ds-stat">報名 ${reg.length} 人 | 可報 ${Math.max(0,(d.max_players||0)-reg.length)} 位${wl.length?" | 候補 "+wl.length+" 人":""}</div>
       </div>
     </div>
     <div class="card-body"><div>
@@ -704,7 +717,7 @@ async function submitEditTee(playDate){
     const tee=await apiFetch("/api/admin/tee-times");
     teeTimes=tee.tee_times||[]; renderAdmTee();
     scheduleData=[];
-  }catch(e){toast("❌ 修改失敗")}
+  }catch(e){toast("❌ 修改失敗: "+e.message)}
 }
 
 async function deleteTee(playDate){

@@ -241,6 +241,8 @@ function renderRegister(){
   const team=getTeam().filter(Boolean);
   const guests=getGuests().filter(Boolean);
   const allMine=[myName,...team,...guests].filter(Boolean);
+  // 也加入非成員模式的名字（加*）
+  if(myName) allMine.push(myName+"*");
   if(!scheduleData.length){el.innerHTML='<div class="empty"><div style="font-size:40px;margin-bottom:10px">🏌️</div>本週尚無開放場次</div>';return}
   const now=new Date();
   const mon=new Date(now);mon.setDate(now.getDate()-(now.getDay()===0?6:now.getDay()-1));mon.setHours(0,0,0,0);

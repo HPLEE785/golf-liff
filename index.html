@@ -335,7 +335,7 @@ function showRegModal(name,isGuest){
     </div><div class="card-body">`;
     if(already){
       const reg=roster.players.find(p=>p.name===name&&(isGuest?p.is_guest:!p.is_guest));
-      html+=`<button class="btn br bsm" onclick="doCancel('${name}','${d.play_date}',${isGuest},'${reg?.reg_id||''}');closeModal()">✖ 取消報名</button>`;
+      html+=`<button class="btn br bsm" onclick="if(confirm('確定取消 ${name} 的報名？')){doCancel('${name}','${d.play_date}',${isGuest},'${reg?.reg_id||''}');closeModal()}">✖ 取消報名</button>`;
     }else if(d.has_dinner){
       html+=`<div class="dc"><button class="btn bb bsm" onclick="doReg('${name}','${d.play_date}','both',${isGuest});closeModal()">⛳🍽️ 打球＋餐敘</button><button class="btn bg bsm" onclick="doReg('${name}','${d.play_date}','golf_only',${isGuest});closeModal()">⛳ 打球不餐敘</button><button class="btn bp bsm" onclick="doReg('${name}','${d.play_date}','dinner_only',${isGuest});closeModal()">🍽️ 餐敘不打球</button></div>`;
     }else{
@@ -355,7 +355,7 @@ function showEditModal(name,playDate,isGuest,regId,dinnerType,hasDinner){
     <button class="btn bp bsm" onclick="doReg('${name}','${playDate}','dinner_only',${isGuest});closeModal()">🍽️ 餐敘不打球</button>
     </div><div style="margin-top:10px">`;
   }else html+='<div>';
-  html+=`<button class="btn br bsm" onclick="doCancel('${name}','${playDate}',${isGuest},'${regId}');closeModal()">✖ 取消報名</button></div>`;
+  html+=`<button class="btn br bsm" onclick="if(confirm('確定取消 ${name} 的報名？')){doCancel('${name}','${playDate}',${isGuest},'${regId}');closeModal()}">✖ 取消報名</button></div>`;
   openModal(html);
 }
 
@@ -386,35 +386,6 @@ async function reloadData(){
 }
 
 // ══ 名單頁 ══
-function copyRoster(){
-  if(!scheduleData.length){toast("⚠️ 尚無場次資料");return}
-  const lines=[];
-  for(const sched of scheduleData){
-    const d=rosterData.find(r=>r.play_date===sched.play_date)||{players:[]};
-    const reg=d.players.filter(p=>!p.is_waitlist&&!p.is_cancelled);
-    if(!reg.length) continue;
-    lines.push(`${mmdd(sched.play_date)} 星期${wdn(sched.play_date)}${sched.has_dinner?" 🍽️":""}`);
-    lines.push(`共 ${reg.length} 人`);
-    reg.forEach((p,i)=>{
-      const name=p.name;
-      lines.push(`${i+1}. ${name}`);
-    });
-    lines.push("");
-  }
-  if(!lines.length){toast("⚠️ 目前無報名資料");return}
-  const text=lines.join("\n").trim();
-  navigator.clipboard.writeText(text)
-    .then(()=>toast("✅ 名單已複製到剪貼簿"))
-    .catch(()=>{
-      // fallback
-      const ta=document.createElement("textarea");
-      ta.value=text; document.body.appendChild(ta);
-      ta.select(); document.execCommand("copy");
-      document.body.removeChild(ta);
-      toast("✅ 名單已複製");
-    });
-}
-
 async function loadRoster(){
   const el=document.getElementById("roster-content");
   el.innerHTML='<div class="loading"><div class="spinner"></div>載入中...</div>';
@@ -428,9 +399,7 @@ function renderRoster(){
   const el=document.getElementById("roster-content");
   if(!scheduleData.length){el.innerHTML='<div class="empty"><div style="font-size:40px;margin-bottom:10px">📋</div>本週尚無場次</div>';return}
   const myName=getMyName();
-  let html=`<div style="margin-bottom:10px">
-    <button class="tee-btn edit" onclick="copyRoster()" style="font-size:13px;padding:8px 14px">📋 複製名單</button>
-  </div>`;
+  let html="";
   for(const sched of scheduleData){
     const d=rosterData.find(r=>r.play_date===sched.play_date)||{play_date:sched.play_date,has_dinner:sched.has_dinner,players:[]};
     const reg=d.players.filter(p=>!p.is_waitlist);

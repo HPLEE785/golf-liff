@@ -650,6 +650,7 @@ function renderAdmMembers(){
     <button class="tee-btn edit" ${dis} onclick="addMemberPrompt()">＋ 新增成員</button>
     <button class="tee-btn edit" onclick="copyAllMembers()">📋 全部複製</button>
     <button class="tee-btn edit" ${dis} onclick="pasteMembers()">📥 從剪貼簿貼上</button>
+    <button class="tee-btn del" ${dis} onclick="clearAllMembers()">🗑️ 全部清空</button>
   </div>
   <div style="font-size:11px;color:var(--muted);margin-bottom:10px">共 ${membersData.length} 位成員</div>`;
   membersData.forEach((m,i)=>{
@@ -697,6 +698,21 @@ async function confirmPasteMembers(){
     }catch(e){}
   }
   toast(`✅ 新增 ${added} 位成員`);
+  await loadAdmMembers();
+}
+
+async function clearAllMembers(){
+  if(!isAdmin){toast("⚠️ 非管理者");return}
+  if(!confirm(`確定清空所有 ${membersData.length} 位成員？此動作無法復原！`))return;
+  if(!confirm("再次確認：確定要清空所有成員名單嗎？"))return;
+  let deleted=0;
+  for(const m of membersData){
+    try{
+      await apiFetch("/api/admin/delete-member",{method:"POST",body:JSON.stringify({operator:getMyName(),id:m.id,name:m.display_name})});
+      deleted++;
+    }catch(e){}
+  }
+  toast(`✅ 已清空 ${deleted} 位成員`);
   await loadAdmMembers();
 }
 

@@ -455,7 +455,26 @@ function renderSettings(){
   html+='<div style="height:24px"></div>';
   document.getElementById("settings-content").innerHTML=html;
   if(myName)document.getElementById("nav-title").textContent="⛳ "+myName;
-  if(!allMembers.length){apiFetch("/api/members-public").then(r=>{allMembers=r.members||[];const dl=document.getElementById("ml");if(dl)dl.innerHTML=allMembers.map(m=>`<option value="${m}">`).join('')}).catch(()=>{})}
+  // 載入成員名單並提醒身份衝突
+  apiFetch("/api/members-public").then(r=>{
+    allMembers=r.members||[];
+    const dl=document.getElementById("ml");
+    if(dl)dl.innerHTML=allMembers.map(m=>`<option value="${m}">`).join('');
+    // 檢查常用隊員/來賓是否有身份衝突
+    const team=getTeam().filter(Boolean);
+    const guests=getGuests().filter(Boolean);
+    const memberSet=new Set(allMembers);
+    const warns=[];
+    guests.forEach(n=>{if(memberSet.has(n))warns.push(`「${n}」目前是隊員，建議移到常用隊員`)});
+    team.forEach(n=>{if(!memberSet.has(n))warns.push(`「${n}」目前不在成員名單，可能已移除`)});
+    if(warns.length){
+      const banner=document.createElement("div");
+      banner.style.cssText="background:#fff3e0;border:1px solid #e65100;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#e65100;";
+      banner.innerHTML="⚠️ 注意：<br>"+warns.map(w=>`• ${w}`).join("<br>");
+      const sc=document.getElementById("settings-content");
+      sc.insertBefore(banner,sc.firstChild);
+    }
+  }).catch(()=>{});
 }
 function saveMyName(v){S.set("myName",v.trim());if(v.trim())document.getElementById("nav-title").textContent="⛳ "+v.trim();toast("✅ 已儲存")}
 function saveTeam(i,v){const t=getTeam();t[i]=v.trim();S.set("myTeam",t);toast("✅ 已儲存");renderSettings()}

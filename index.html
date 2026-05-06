@@ -144,8 +144,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
 </head>
 <body>
 <div class="nav">
-  <span style="font-size:22px;line-height:1">⛳</span>
-  <div class="nav-title" id="nav-title">高爾夫報名</div>
+  <div class="nav-title" id="nav-title">⛳ 高爾夫報名</div>
   <button class="nav-btn" onclick="doLeave()" style="margin-right:4px">離開</button>
   <button class="nav-btn" onclick="refresh()">🔄</button>
 </div>
@@ -160,13 +159,15 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
 <div class="page" id="page-settings"><div id="settings-content"></div></div>
 <div class="page" id="page-admin">
   <div id="admin-lock-banner" class="lock-banner" style="display:none">🔒 非管理者，功能已鎖定。輸入緊急密碼可解鎖。</div>
-  <div class="adm-tabs">
-    <button class="adm-tab active" data-adm="tee" onclick="switchAdmTab(this)">⛳ 設定球敘</button>
+  <div class="adm-tabs" style="flex-wrap:wrap">
+    <button class="adm-tab active" data-adm="tee" onclick="switchAdmTab(this)">⛳ 球敘</button>
     <button class="adm-tab" data-adm="admins" onclick="switchAdmTab(this)">👑 管理者</button>
+    <button class="adm-tab" data-adm="members" onclick="switchAdmTab(this)">👤 成員</button>
     <button class="adm-tab" data-adm="logs" onclick="switchAdmTab(this)">📋 LOGS</button>
   </div>
   <div class="adm-page active" id="adm-tee"><div class="loading"><div class="spinner"></div></div></div>
   <div class="adm-page" id="adm-admins"><div class="loading"><div class="spinner"></div></div></div>
+  <div class="adm-page" id="adm-members"><div class="loading"><div class="spinner"></div></div></div>
   <div class="adm-page" id="adm-logs"><div class="loading"><div class="spinner"></div></div></div>
 </div>
 <div class="modal-bg" id="modal-bg" onclick="closeModal(event)">
@@ -210,6 +211,7 @@ function switchAdmTab(el){
   document.getElementById("adm-"+adm).classList.add("active");
   if(adm==="tee")renderAdmTee();
   else if(adm==="admins")renderAdmAdmins();
+  else if(adm==="members")loadAdmMembers();
   else if(adm==="logs")loadAdmLogs();
 }
 function refresh(){
@@ -249,6 +251,9 @@ function renderRegister(){
     const allPlayers=(roster?.players||[]).filter(p=>!p.is_waitlist);
     const myPlayers=allPlayers.filter(p=>allMine.includes(p.name));
     const iReg=myName&&allPlayers.some(p=>p.name===myName&&!p.is_guest);
+    // 也檢查 name* 是否已報名（非成員模式）
+    const iRegStar=myName&&allPlayers.some(p=>p.name===myName+"*"&&p.is_guest);
+    const showRegBtn=!iReg&&!iRegStar&&myName;
     const remain=Math.max(0,(d.max_players||0)-d.registered);
     const cls=d.has_dinner?'dn':(iReg?'my':'pl');
     html+=`<div class="card" style="margin-bottom:12px">
@@ -256,8 +261,8 @@ function renderRegister(){
       <div class="ds-info">
         <div class="ds-name" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <span>${mmdd(d.play_date)} 星期${wdn(d.play_date)}${d.has_dinner?' 🍽️':''}</span>
-          ${!iReg&&myName?`<button class="reg-btn" onclick="quickReg('${myName}','${d.play_date}',${d.has_dinner})">我要報名</button>`:''}
-          ${iReg?'<span class="badge b-ok">✓ 已報名</span>':''}
+          ${showRegBtn?`<button class="reg-btn" onclick="quickReg('${myName}','${d.play_date}',${d.has_dinner})">我要報名</button>`:''}
+          ${(iReg||iRegStar)?'<span class="badge b-ok">✓ 已報名</span>':''}
         </div>
         ${d.note?`<div style="font-size:12px;color:var(--sub);margin-top:2px;font-style:italic">📝 ${d.note}</div>`:''}
         <div class="ds-stat">報名 ${d.registered} 人 | 可報 ${remain} 位</div>
@@ -405,7 +410,6 @@ function renderRoster(){
       <div class="ds-info">
         <div class="ds-name" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <span>${mmdd(sched.play_date)} 星期${wdn(sched.play_date)}${sched.has_dinner?' 🍽️':''}</span>
-          ${!iReg&&myName?`<button class="reg-btn" onclick="quickReg('${myName}','${sched.play_date}',${sched.has_dinner})">我要報名</button>`:''}
           ${iReg?'<span class="badge b-ok">✓ 已報名</span>':''}
         </div>
         ${sched.note?`<div style="font-size:12px;color:var(--sub);margin-top:2px;font-style:italic">📝 ${sched.note}</div>`:''}
@@ -621,6 +625,113 @@ async function emergencyUnlock(){
   const code=(document.getElementById("emergency-input")?.value||"").trim();
   if(code===EMERGENCY){isAdmin=true;adminChecked=true;document.getElementById("admin-lock-banner").style.display="none";toast("🔓 已緊急解鎖");renderAdmTee();renderAdmAdmins()}
   else toast("❌ 密碼錯誤");
+}
+
+// ══ 成員管理 ══
+let membersData=[];
+
+async function loadAdmMembers(){
+  const el=document.getElementById("adm-members");
+  el.innerHTML='<div class="loading"><div class="spinner"></div>載入中...</div>';
+  try{
+    const r=await apiFetch("/api/admin/members");
+    membersData=r.members||[];renderAdmMembers();
+  }catch(e){el.innerHTML='<div class="empty">⚠️ 載入失敗</div>'}
+}
+
+function renderAdmMembers(){
+  const el=document.getElementById("adm-members");
+  const dis=!isAdmin?"disabled":"";
+  const names=membersData.map(m=>m.display_name).join("\n");
+  let html=`
+  <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+    <button class="tee-btn edit" ${dis} onclick="addMemberPrompt()">＋ 新增成員</button>
+    <button class="tee-btn edit" onclick="copyAllMembers()">📋 全部複製</button>
+    <button class="tee-btn edit" ${dis} onclick="pasteMembers()">📥 從剪貼簿貼上</button>
+  </div>
+  <div style="font-size:11px;color:var(--muted);margin-bottom:10px">共 ${membersData.length} 位成員</div>`;
+  membersData.forEach((m,i)=>{
+    html+=`<div class="srow">
+      <div class="snum">${i+1}</div>
+      <input class="sinput" value="${m.display_name}" ${dis}
+        onchange="updateMemberName('${m.id}','${m.display_name}',this.value)">
+      <button class="sclear" ${dis} onclick="deleteMember('${m.id}','${m.display_name}')">×</button>
+    </div>`;
+  });
+  el.innerHTML=html;
+}
+
+function copyAllMembers(){
+  const names=membersData.map(m=>m.display_name).join("\n");
+  navigator.clipboard.writeText(names).then(()=>toast("✅ 已複製 "+membersData.length+" 位成員"))
+    .catch(()=>toast("⚠️ 複製失敗"));
+}
+
+async function pasteMembers(){
+  if(!isAdmin){toast("⚠️ 非管理者");return}
+  try{
+    const text=await navigator.clipboard.readText();
+    const names=text.split("\n").map(n=>n.trim()).filter(Boolean);
+    if(!names.length){toast("⚠️ 剪貼簿沒有內容");return}
+    openModal(`<div class="modal-title">從剪貼簿匯入</div>
+    <div class="modal-sub">即將新增以下不在名單中的成員：</div>
+    <div style="background:#f5f5f5;border-radius:8px;padding:12px;font-size:13px;max-height:200px;overflow-y:auto;margin-bottom:14px">
+      ${names.map(n=>`<div>${n}</div>`).join("")}
+    </div>
+    <div style="font-size:12px;color:var(--sub);margin-bottom:14px">已存在的成員不會重複新增</div>
+    <button class="btn bg bsm" onclick="confirmPasteMembers(${JSON.stringify(names).replace(/'/g,'\'')})">✅ 確認新增</button>`);
+  }catch(e){toast("⚠️ 無法讀取剪貼簿")}
+}
+
+async function confirmPasteMembers(names){
+  closeModal();
+  let added=0;
+  for(const name of names){
+    try{
+      const res=await apiFetch("/api/admin/add-member",{method:"POST",body:JSON.stringify({operator:getMyName(),name})});
+      if(res.status==="ok")added++;
+    }catch(e){}
+  }
+  toast(`✅ 新增 ${added} 位成員`);
+  await loadAdmMembers();
+}
+
+async function addMemberPrompt(){
+  if(!isAdmin){toast("⚠️ 非管理者");return}
+  openModal(`<div class="modal-title">新增成員</div>
+  <div class="modal-sub">輸入成員姓名</div>
+  <input class="input" id="new-member-name" placeholder="成員姓名">
+  <button class="btn bg" style="margin-top:12px" onclick="confirmAddMember()">✅ 新增</button>`);
+}
+
+async function confirmAddMember(){
+  const name=(document.getElementById("new-member-name")?.value||"").trim();
+  if(!name){toast("⚠️ 請輸入姓名");return}
+  try{
+    const res=await apiFetch("/api/admin/add-member",{method:"POST",body:JSON.stringify({operator:getMyName(),name})});
+    if(res.status==="ok"){toast("✅ 新增成功");closeModal();await loadAdmMembers()}
+    else if(res.status==="already_exists")toast("⚠️ 此成員已存在")
+    else toast("⚠️ "+res.status);
+  }catch(e){toast("❌ 新增失敗")}
+}
+
+async function updateMemberName(id,oldName,newName){
+  if(!isAdmin){toast("⚠️ 非管理者");return}
+  newName=newName.trim();
+  if(!newName||newName===oldName)return;
+  try{
+    await apiFetch("/api/admin/update-member",{method:"POST",body:JSON.stringify({operator:getMyName(),id,name:newName})});
+    toast("✅ 已更新");await loadAdmMembers();
+  }catch(e){toast("❌ 更新失敗")}
+}
+
+async function deleteMember(id,name){
+  if(!isAdmin){toast("⚠️ 非管理者");return}
+  if(!confirm(`確定刪除成員「${name}」？`))return;
+  try{
+    await apiFetch("/api/admin/delete-member",{method:"POST",body:JSON.stringify({operator:getMyName(),id,name})});
+    toast("✅ 已刪除");await loadAdmMembers();
+  }catch(e){toast("❌ 刪除失敗")}
 }
 
 // ══ LOGS ══

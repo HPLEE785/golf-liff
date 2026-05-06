@@ -675,17 +675,19 @@ async function pasteMembers(){
     const text=await navigator.clipboard.readText();
     const names=text.split("\n").map(n=>n.trim()).filter(Boolean);
     if(!names.length){toast("⚠️ 剪貼簿沒有內容");return}
+    window._pendingImport = names;
     openModal(`<div class="modal-title">從剪貼簿匯入</div>
     <div class="modal-sub">即將新增以下不在名單中的成員：</div>
     <div style="background:#f5f5f5;border-radius:8px;padding:12px;font-size:13px;max-height:200px;overflow-y:auto;margin-bottom:14px">
       ${names.map(n=>`<div>${n}</div>`).join("")}
     </div>
     <div style="font-size:12px;color:var(--sub);margin-bottom:14px">已存在的成員不會重複新增</div>
-    <button class="btn bg bsm" onclick="confirmPasteMembers(${JSON.stringify(names).replace(/'/g,'\'')})">✅ 確認新增</button>`);
+    <button class="btn bg bsm" onclick="confirmPasteMembers()">✅ 確認新增</button>`);
   }catch(e){toast("⚠️ 無法讀取剪貼簿")}
 }
 
-async function confirmPasteMembers(names){
+async function confirmPasteMembers(){
+  const names=window._pendingImport||[];
   closeModal();
   let added=0;
   for(const name of names){

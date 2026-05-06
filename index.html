@@ -386,6 +386,35 @@ async function reloadData(){
 }
 
 // ══ 名單頁 ══
+function copyRoster(){
+  if(!scheduleData.length){toast("⚠️ 尚無場次資料");return}
+  const lines=[];
+  for(const sched of scheduleData){
+    const d=rosterData.find(r=>r.play_date===sched.play_date)||{players:[]};
+    const reg=d.players.filter(p=>!p.is_waitlist&&!p.is_cancelled);
+    if(!reg.length) continue;
+    lines.push(`${mmdd(sched.play_date)} 星期${wdn(sched.play_date)}${sched.has_dinner?" 🍽️":""}`);
+    lines.push(`共 ${reg.length} 人`);
+    reg.forEach((p,i)=>{
+      const name=p.name;
+      lines.push(`${i+1}. ${name}`);
+    });
+    lines.push("");
+  }
+  if(!lines.length){toast("⚠️ 目前無報名資料");return}
+  const text=lines.join("\n").trim();
+  navigator.clipboard.writeText(text)
+    .then(()=>toast("✅ 名單已複製到剪貼簿"))
+    .catch(()=>{
+      // fallback
+      const ta=document.createElement("textarea");
+      ta.value=text; document.body.appendChild(ta);
+      ta.select(); document.execCommand("copy");
+      document.body.removeChild(ta);
+      toast("✅ 名單已複製");
+    });
+}
+
 async function loadRoster(){
   const el=document.getElementById("roster-content");
   el.innerHTML='<div class="loading"><div class="spinner"></div>載入中...</div>';
@@ -399,7 +428,9 @@ function renderRoster(){
   const el=document.getElementById("roster-content");
   if(!scheduleData.length){el.innerHTML='<div class="empty"><div style="font-size:40px;margin-bottom:10px">📋</div>本週尚無場次</div>';return}
   const myName=getMyName();
-  let html="";
+  let html=`<div style="margin-bottom:10px">
+    <button class="tee-btn edit" onclick="copyRoster()" style="font-size:13px;padding:8px 14px">📋 複製名單</button>
+  </div>`;
   for(const sched of scheduleData){
     const d=rosterData.find(r=>r.play_date===sched.play_date)||{play_date:sched.play_date,has_dinner:sched.has_dinner,players:[]};
     const reg=d.players.filter(p=>!p.is_waitlist);
@@ -455,26 +486,7 @@ function renderSettings(){
   html+='<div style="height:24px"></div>';
   document.getElementById("settings-content").innerHTML=html;
   if(myName)document.getElementById("nav-title").textContent="⛳ "+myName;
-  // 載入成員名單並提醒身份衝突
-  apiFetch("/api/members-public").then(r=>{
-    allMembers=r.members||[];
-    const dl=document.getElementById("ml");
-    if(dl)dl.innerHTML=allMembers.map(m=>`<option value="${m}">`).join('');
-    // 檢查常用隊員/來賓是否有身份衝突
-    const team=getTeam().filter(Boolean);
-    const guests=getGuests().filter(Boolean);
-    const memberSet=new Set(allMembers);
-    const warns=[];
-    guests.forEach(n=>{if(memberSet.has(n))warns.push(`「${n}」目前是隊員，建議移到常用隊員`)});
-    team.forEach(n=>{if(!memberSet.has(n))warns.push(`「${n}」目前不在成員名單，可能已移除`)});
-    if(warns.length){
-      const banner=document.createElement("div");
-      banner.style.cssText="background:#fff3e0;border:1px solid #e65100;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#e65100;";
-      banner.innerHTML="⚠️ 注意：<br>"+warns.map(w=>`• ${w}`).join("<br>");
-      const sc=document.getElementById("settings-content");
-      sc.insertBefore(banner,sc.firstChild);
-    }
-  }).catch(()=>{});
+  if(!allMembers.length){apiFetch("/api/members-public").then(r=>{allMembers=r.members||[];const dl=document.getElementById("ml");if(dl)dl.innerHTML=allMembers.map(m=>`<option value="${m}">`).join('')}).catch(()=>{})}
 }
 function saveMyName(v){S.set("myName",v.trim());if(v.trim())document.getElementById("nav-title").textContent="⛳ "+v.trim();toast("✅ 已儲存")}
 function saveTeam(i,v){const t=getTeam();t[i]=v.trim();S.set("myTeam",t);toast("✅ 已儲存");renderSettings()}

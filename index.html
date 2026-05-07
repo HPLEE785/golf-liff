@@ -193,10 +193,10 @@ function wdn(ds){const d=new Date(ds+"T00:00:00");return WD[d.getDay()===0?6:d.g
 function mmdd(ds){const[,m,d]=ds.split("-");return m+"/"+d}
 function isExpired(ds){return new Date()>new Date(ds+"T06:00:00+08:00")}
 function dtags(t,hasDinner){
-  if(t==="both")return'<span class="tag t-b">打球+餐</span>';
-  if(t==="golf_only"||(hasDinner&&!t))return'<span class="tag t-g">打球</span>';
-  if(t==="dinner_only")return'<span class="tag t-d">餐敘</span>';
-  return"";
+  if(!hasDinner) return '<span class="tag t-g">打球</span>';
+  if(t==="both") return '<span class="tag t-b">打球+餐</span>';
+  if(t==="dinner_only") return '<span class="tag t-d">餐敘</span>';
+  return '<span class="tag t-g">打球</span>';
 }
 
 function switchTab(el){
@@ -425,8 +425,17 @@ function copyRoster(){
     const reg=d.players.filter(p=>!p.is_waitlist);
     if(!reg.length) continue;
     lines.push(`${mmdd(sched.play_date)} 星期${wdn(sched.play_date)}${sched.has_dinner?" 🍽️":""}`);
-    lines.push(`參加人數：${reg.length}`);
-    reg.forEach((p,i)=>lines.push(`${i+1}. ${p.name}`));
+    if(sched.has_dinner){
+      const golf=reg.filter(p=>p.dinner_type!=="dinner_only");
+      const dinner=reg.filter(p=>p.dinner_type==="both"||p.dinner_type==="dinner_only");
+      lines.push(`打球名單（${golf.length}人）`);
+      golf.forEach((p,i)=>lines.push(`${i+1}. ${p.name}`));
+      lines.push(`餐敘名單（${dinner.length}人）`);
+      dinner.forEach((p,i)=>lines.push(`${i+1}. ${p.name}`));
+    }else{
+      lines.push(`參加人數：${reg.length}`);
+      reg.forEach((p,i)=>lines.push(`${i+1}. ${p.name}`));
+    }
     lines.push("");
   }
   if(!lines.length){toast("⚠️ 目前無報名資料");return}

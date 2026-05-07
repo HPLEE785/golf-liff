@@ -453,11 +453,10 @@ function renderSettings(){
   const myName=getMyName(),team=getTeam(),guests=getGuests();
   let html=`<div class="sec">我自己</div>
   <div class="card"><div class="card-body">
-    <div style="font-size:12px;font-weight:700;color:${myName?'var(--sub)':'var(--r1)'};margin-bottom:5px">
+    <div id="myname-label" style="font-size:12px;font-weight:700;color:${myName?'var(--sub)':'var(--r1)'};margin-bottom:5px">
       我的名字（必填，用於報名）${myName?'':'　⬅ 請先填寫'}
     </div>
-    <input class="input ${myName?'':'blink-input'}" id="s-myname" value="${myName}" placeholder="輸入你的正式姓名"
-      oninput="if(this.value.trim()){this.classList.remove('blink-input');this.style.animation='';document.querySelector('[data-tab=\'settings\']').previousElementSibling&&null}"
+    <input class="input" id="s-myname" value="${myName}" placeholder="輸入你的正式姓名"
       onchange="saveMyName(this.value)">
   </div></div>
   <div class="sec">常用隊員（最多7人）</div>`;
@@ -836,7 +835,7 @@ function doLeave(){try{if(typeof liff!=="undefined"&&liff.closeWindow)liff.close
     renderSettings();
     setTimeout(()=>{
       const inp=document.getElementById("s-myname");
-      if(inp){ inp.focus(); inp.style.animation="blink 1s step-start infinite"; }
+      if(inp){ inp.focus(); inp.classList.add("blink-input"); }
     },300);
   }
   try{

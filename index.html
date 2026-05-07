@@ -140,6 +140,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
 .toggle input:checked + .toggle-slider{background:var(--g3)}
 .toggle input:checked + .toggle-slider:before{transform:translateX(20px)}
 .reg-btn{font-size:12px;padding:4px 10px;background:var(--g2);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-family:var(--font)}
+@keyframes blink{0%,100%{border-color:var(--r1);background:#fff0f0}50%{border-color:var(--border);background:#fff}}
+.blink-input{animation:blink 1s step-start infinite}
 </style>
 </head>
 <body>
@@ -287,17 +289,32 @@ function renderRegister(){
     html+='</div>';
   }
   if(team.length){
-    html+='<div class="sec">常用隊員</div><div class="card"><div class="card-body"><div class="mg">';
-    team.forEach(n=>{html+=`<button class="mb" onclick="showRegModal('${n}',false)">${n}</button>`});
+    html+='<div class="sec">常用隊員</div><div class="card" style="background:#e3f2fd;border:1.5px solid #90caf9"><div class="card-body"><div class="mg">';
+    team.forEach(n=>{
+      // 找該隊員報名了哪些場次
+      const days=scheduleData.filter(d=>{
+        const r=rosterData.find(x=>x.play_date===d.play_date);
+        return r&&r.players.some(p=>p.name===n&&!p.is_waitlist&&!p.is_guest);
+      }).map(d=>wdn(d.play_date)).join("");
+      const label=days?`${n} (${days})`:n;
+      html+=`<button class="mb" style="background:#e3f2fd;border-color:#90caf9" onclick="showRegModal('${n}',false)">${label}</button>`;
+    });
     html+='</div></div></div>';
   }
   html+='<div class="sec">常用來賓</div>';
   if(!guestOk){html+='<div class="card"><div class="card-body" style="color:var(--muted);font-size:12px;text-align:center;padding:16px">週一 00:00 後開放來賓報名</div></div>'}
   else if(guests.length){
-    html+='<div class="card"><div class="card-body"><div class="mg">';
-    guests.forEach(n=>{html+=`<button class="mb" onclick="showRegModal('${n}',true)">${n}</button>`});
+    html+='<div class="card" style="background:#d8f3dc;border:1.5px solid #95d5b2"><div class="card-body"><div class="mg">';
+    guests.forEach(n=>{
+      const days=scheduleData.filter(d=>{
+        const r=rosterData.find(x=>x.play_date===d.play_date);
+        return r&&r.players.some(p=>p.name===n&&!p.is_waitlist);
+      }).map(d=>wdn(d.play_date)).join("");
+      const label=days?`${n} (${days})`:n;
+      html+=`<button class="mb" style="background:#d8f3dc;border-color:#95d5b2" onclick="showRegModal('${n}',true)">${label}</button>`;
+    });
     html+='</div></div></div>';
-  }else{html+='<div class="card"><div class="card-body" style="color:var(--muted);font-size:13px;text-align:center;padding:16px">請至「⚙️ 我的」設定常用來賓</div></div>'}
+  }}else{html+='<div class="card"><div class="card-body" style="color:var(--muted);font-size:13px;text-align:center;padding:16px">請至「⚙️ 我的」設定常用來賓</div></div>'}
   el.innerHTML=html;
 }
 
@@ -335,7 +352,7 @@ function showRegModal(name,isGuest){
     </div><div class="card-body">`;
     if(already){
       const reg=roster.players.find(p=>p.name===name&&(isGuest?p.is_guest:!p.is_guest));
-      html+=`<button class="btn br bsm" onclick="if(confirm('確定取消 ${name} 的報名？')){doCancel('${name}','${d.play_date}',${isGuest},'${reg?.reg_id||''}');closeModal()}">✖ 取消報名</button>`;
+      html+=`<button class="btn br bsm" onclick="doCancel('${name}','${d.play_date}',${isGuest},'${reg?.reg_id||''}');closeModal()">✖ 取消報名</button>`;
     }else if(d.has_dinner){
       html+=`<div class="dc"><button class="btn bb bsm" onclick="doReg('${name}','${d.play_date}','both',${isGuest});closeModal()">⛳🍽️ 打球＋餐敘</button><button class="btn bg bsm" onclick="doReg('${name}','${d.play_date}','golf_only',${isGuest});closeModal()">⛳ 打球不餐敘</button><button class="btn bp bsm" onclick="doReg('${name}','${d.play_date}','dinner_only',${isGuest});closeModal()">🍽️ 餐敘不打球</button></div>`;
     }else{
@@ -355,7 +372,7 @@ function showEditModal(name,playDate,isGuest,regId,dinnerType,hasDinner){
     <button class="btn bp bsm" onclick="doReg('${name}','${playDate}','dinner_only',${isGuest});closeModal()">🍽️ 餐敘不打球</button>
     </div><div style="margin-top:10px">`;
   }else html+='<div>';
-  html+=`<button class="btn br bsm" onclick="if(confirm('確定取消 ${name} 的報名？')){doCancel('${name}','${playDate}',${isGuest},'${regId}');closeModal()}">✖ 取消報名</button></div>`;
+  html+=`<button class="btn br bsm" onclick="doCancel('${name}','${playDate}',${isGuest},'${regId}');closeModal()">✖ 取消報名</button></div>`;
   openModal(html);
 }
 
@@ -436,20 +453,24 @@ function renderSettings(){
   const myName=getMyName(),team=getTeam(),guests=getGuests();
   let html=`<div class="sec">我自己</div>
   <div class="card"><div class="card-body">
-    <div style="font-size:12px;font-weight:700;color:var(--sub);margin-bottom:5px">我的名字（必填，用於報名）</div>
-    <input class="input" id="s-myname" value="${myName}" placeholder="輸入你的正式姓名" onchange="saveMyName(this.value)">
+    <div style="font-size:12px;font-weight:700;color:${myName?'var(--sub)':'var(--r1)'};margin-bottom:5px">
+      我的名字（必填，用於報名）${myName?'':'　⬅ 請先填寫'}
+    </div>
+    <input class="input ${myName?'':'blink-input'}" id="s-myname" value="${myName}" placeholder="輸入你的正式姓名"
+      oninput="if(this.value.trim()){this.classList.remove('blink-input');this.style.animation='';document.querySelector('[data-tab=\'settings\']').previousElementSibling&&null}"
+      onchange="saveMyName(this.value)">
   </div></div>
   <div class="sec">常用隊員（最多7人）</div>`;
   team.forEach((n,i)=>{
-    html+=`<div class="srow"><div class="snum">${i+1}</div>
-    <input class="sinput" placeholder="隊員${i+1}姓名" value="${n}" onchange="saveTeam(${i},this.value)" list="ml">
+    html+=`<div class="srow" style="background:#e3f2fd"><div class="snum">${i+1}</div>
+    <input class="sinput" style="background:#e3f2fd" placeholder="隊員${i+1}姓名" value="${n}" onchange="saveTeam(${i},this.value)" list="ml">
     ${n?`<button class="sclear" onclick="clearTeam(${i})">×</button>`:''}</div>`;
   });
   html+=`<datalist id="ml">${allMembers.map(m=>`<option value="${m}">`).join('')}</datalist>
   <div class="sec">常用來賓（最多11人）</div>`;
   guests.forEach((n,i)=>{
-    html+=`<div class="srow"><div class="snum">${i+1}</div>
-    <input class="sinput" placeholder="來賓${i+1}姓名" value="${n}" onchange="saveGuest(${i},this.value)">
+    html+=`<div class="srow" style="background:#d8f3dc"><div class="snum">${i+1}</div>
+    <input class="sinput" style="background:#d8f3dc" placeholder="來賓${i+1}姓名" value="${n}" onchange="saveGuest(${i},this.value)">
     ${n?`<button class="sclear" onclick="clearGuest(${i})">×</button>`:''}</div>`;
   });
   html+='<div style="height:24px"></div>';
@@ -804,8 +825,20 @@ function doLeave(){try{if(typeof liff!=="undefined"&&liff.closeWindow)liff.close
 // ══ 初始化 ══
 (async()=>{
   const myName=getMyName();
-  if(myName)document.getElementById("nav-title").textContent="⛳ "+myName;
-  else setTimeout(()=>toast("💡 請先至「⚙️ 我的」設定你的名字",4000),800);
+  if(myName){
+    document.getElementById("nav-title").textContent="⛳ "+myName;
+  } else {
+    // 沒有名字，直接切到「我的」頁面
+    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+    document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+    document.querySelector('[data-tab="settings"]').classList.add("active");
+    document.getElementById("page-settings").classList.add("active");
+    renderSettings();
+    setTimeout(()=>{
+      const inp=document.getElementById("s-myname");
+      if(inp){ inp.focus(); inp.style.animation="blink 1s step-start infinite"; }
+    },300);
+  }
   try{
     await Promise.race([liff.init({liffId:"2009411318-rdNGpvNz"}),new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout")),3000))]);
   }catch(e){console.log("LIFF init:",e.message)}

@@ -192,7 +192,12 @@ let teeTimes=[],schedulable=[];
 function wdn(ds){const d=new Date(ds+"T00:00:00");return WD[d.getDay()===0?6:d.getDay()-1]}
 function mmdd(ds){const[,m,d]=ds.split("-");return m+"/"+d}
 function isExpired(ds){return new Date()>new Date(ds+"T06:00:00+08:00")}
-function dtags(t){if(t==="both")return'<span class="tag t-b">打球+餐</span>';if(t==="golf_only")return'<span class="tag t-g">打球</span>';if(t==="dinner_only")return'<span class="tag t-d">餐敘</span>';return""}
+function dtags(t,hasDinner){
+  if(t==="both")return'<span class="tag t-b">打球+餐</span>';
+  if(t==="golf_only"||(hasDinner&&!t))return'<span class="tag t-g">打球</span>';
+  if(t==="dinner_only")return'<span class="tag t-d">餐敘</span>';
+  return"";
+}
 
 function switchTab(el){
   document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
@@ -278,7 +283,7 @@ function renderRegister(){
         html+=`<div class="pr" onclick="showEditModal('${p.name}','${d.play_date}',${p.is_guest},'${p.reg_id||''}','${p.dinner_type||''}',${d.has_dinner})">
           <div class="pn r">${i+1}</div>
           <div class="pname">${p.is_guest?p.name+' / 來賓 / '+(p.invited_by||'?'):p.name}</div>
-          <div class="ptags">${p.is_guest?'<span class="tag t-gs">來賓</span>':''}${dtags(p.dinner_type)}</div>
+          <div class="ptags">${p.is_guest?'<span class="tag t-gs">來賓</span>':''}${dtags(p.dinner_type,d.has_dinner)}</div>
           <div class="edit-hint">✎</div>
         </div>`;
       });
@@ -466,7 +471,7 @@ function renderRoster(){
     ${reg.map((p,i)=>`<div class="pr">
       <div class="pn r">${i+1}</div>
       <div class="pname">${p.is_guest?p.name+' / 來賓 / '+(p.invited_by||'?'):p.name}</div>
-      <div class="ptags">${dtags(p.dinner_type)}</div>
+      <div class="ptags">${dtags(p.dinner_type,sched.has_dinner)}</div>
     </div>`).join("")}
     ${wl.length?'<div style="font-size:11px;font-weight:900;color:var(--muted);margin:8px 0 4px">候補</div>':''}
     ${wl.map((p,i)=>`<div class="pr"><div class="pn w">W${i+1}</div><div class="pname">${p.name}</div><div class="ptags"><span class="tag t-wl">候補</span></div></div>`).join("")}

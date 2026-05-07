@@ -412,11 +412,38 @@ async function loadRoster(){
   }catch(e){el.innerHTML='<div class="empty">⚠️ 載入失敗</div>'}
 }
 
+function copyRoster(){
+  if(!scheduleData.length){toast("⚠️ 尚無場次資料");return}
+  const lines=[];
+  for(const sched of scheduleData){
+    const d=rosterData.find(r=>r.play_date===sched.play_date)||{players:[]};
+    const reg=d.players.filter(p=>!p.is_waitlist);
+    if(!reg.length) continue;
+    lines.push(`${mmdd(sched.play_date)} 星期${wdn(sched.play_date)}${sched.has_dinner?" 🍽️":""}`);
+    lines.push(`參加人數：${reg.length}`);
+    reg.forEach((p,i)=>lines.push(`${i+1}. ${p.name}`));
+    lines.push("");
+  }
+  if(!lines.length){toast("⚠️ 目前無報名資料");return}
+  const text=lines.join("\n").trim();
+  navigator.clipboard.writeText(text)
+    .then(()=>toast("✅ 名單已複製到剪貼簿"))
+    .catch(()=>{
+      const ta=document.createElement("textarea");
+      ta.value=text;document.body.appendChild(ta);
+      ta.select();document.execCommand("copy");
+      document.body.removeChild(ta);
+      toast("✅ 名單已複製");
+    });
+}
+
 function renderRoster(){
   const el=document.getElementById("roster-content");
   if(!scheduleData.length){el.innerHTML='<div class="empty"><div style="font-size:40px;margin-bottom:10px">📋</div>本週尚無場次</div>';return}
   const myName=getMyName();
-  let html="";
+  let html=`<div style="margin-bottom:10px">
+    <button class="tee-btn edit" onclick="copyRoster()" style="font-size:13px;padding:8px 14px">📋 複製名單</button>
+  </div>`;
   for(const sched of scheduleData){
     const d=rosterData.find(r=>r.play_date===sched.play_date)||{play_date:sched.play_date,has_dinner:sched.has_dinner,players:[]};
     const reg=d.players.filter(p=>!p.is_waitlist);

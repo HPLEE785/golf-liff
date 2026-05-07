@@ -554,7 +554,10 @@ function renderAdmTee(){
           <div class="tee-stat">${t.max_groups} 組（${t.max_players} 人）｜已報名 ${t.registered} 人</div>
         </div>
         <div class="tee-actions">
-          <button class="tee-btn edit" ${dis} onclick="showEditTeeModal('${t.play_date}',${t.max_groups},${t.has_dinner},'${(t.note||"").replace(/'/g,"\\'")}')">修改</button>
+          <button class="tee-btn edit" ${dis}
+  data-date="${t.play_date}" data-groups="${t.max_groups}"
+  data-dinner="${t.has_dinner}" data-note="${encodeURIComponent(t.note||'')}"
+  onclick="showEditTeeModalBtn(this)">修改</button>
           <button class="tee-btn del" ${dis} onclick="deleteTee('${t.play_date}')">刪除</button>
         </div>
       </div>${t.note?`<div class="tee-note">📝 ${t.note}</div>`:''}</div>`;
@@ -598,6 +601,14 @@ async function submitAddTee(){
     toast("✅ 球敘設定成功");closeModal();
     const tee=await apiFetch("/api/admin/tee-times");teeTimes=tee.tee_times||[];renderAdmTee();scheduleData=[];
   }catch(e){toast("❌ 設定失敗")}
+}
+
+function showEditTeeModalBtn(btn){
+  const playDate=btn.dataset.date;
+  const maxGroups=parseInt(btn.dataset.groups);
+  const hasDinner=btn.dataset.dinner==="true";
+  const note=decodeURIComponent(btn.dataset.note||"");
+  showEditTeeModal(playDate,maxGroups,hasDinner,note);
 }
 
 function showEditTeeModal(playDate,maxGroups,hasDinner,note){

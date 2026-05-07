@@ -457,19 +457,19 @@ function renderSettings(){
       我的名字（必填，用於報名）${myName?'':'　⬅ 請先填寫'}
     </div>
     <input class="input" id="s-myname" value="${myName}" placeholder="輸入你的正式姓名"
-      onchange="saveMyName(this.value)">
+      autocomplete="off" onchange="saveMyName(this.value)">
   </div></div>
   <div class="sec">常用隊員（最多7人）</div>`;
   team.forEach((n,i)=>{
     html+=`<div class="srow" style="background:#e3f2fd"><div class="snum">${i+1}</div>
-    <input class="sinput" style="background:#e3f2fd" placeholder="隊員${i+1}姓名" value="${n}" onchange="saveTeam(${i},this.value)" list="ml">
+    <input class="sinput" style="background:#e3f2fd" placeholder="隊員${i+1}姓名" autocomplete="off" value="${n}" onchange="saveTeam(${i},this.value)" list="ml">
     ${n?`<button class="sclear" onclick="clearTeam(${i})">×</button>`:''}</div>`;
   });
   html+=`<datalist id="ml">${allMembers.map(m=>`<option value="${m}">`).join('')}</datalist>
   <div class="sec">常用來賓（最多11人）</div>`;
   guests.forEach((n,i)=>{
     html+=`<div class="srow" style="background:#d8f3dc"><div class="snum">${i+1}</div>
-    <input class="sinput" style="background:#d8f3dc" placeholder="來賓${i+1}姓名" value="${n}" onchange="saveGuest(${i},this.value)">
+    <input class="sinput" style="background:#d8f3dc" placeholder="來賓${i+1}姓名" autocomplete="off" value="${n}" onchange="saveGuest(${i},this.value)">
     ${n?`<button class="sclear" onclick="clearGuest(${i})">×</button>`:''}</div>`;
   });
   html+='<div style="height:24px"></div>';
@@ -615,8 +615,8 @@ function renderAdmAdmins(){
   rows.forEach((a,i)=>{
     html+=`<div class="admin-row">
       <div class="admin-idx">${i+1}</div>
-      <input class="admin-input" placeholder="本名" value="${a.display_name||''}" ${dis} oninput="updateAdmin(${i},'display_name',this.value)">
-      <input class="admin-input" placeholder="Line顯示名" value="${a.line_user_id||''}" ${dis} oninput="updateAdmin(${i},'line_user_id',this.value)">
+      <input class="admin-input" placeholder="本名" autocomplete="off" value="${a.display_name||''}" ${dis} oninput="updateAdmin(${i},'display_name',this.value)">
+      <input class="admin-input" placeholder="Line顯示名" autocomplete="off" value="${a.line_user_id||''}" ${dis} oninput="updateAdmin(${i},'line_user_id',this.value)">
       <button class="admin-del" ${dis} onclick="clearAdmin(${i})">×</button>
     </div>`;
   });

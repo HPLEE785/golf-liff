@@ -9,6 +9,7 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
+  --fs:1;  /* 字體倍率：1=最小 1.1=適中 1.2=最大 */
   --g1:#1b4332;--g2:#2d6a4f;--g3:#40916c;--g5:#d8f3dc;
   --r1:#c0392b;--r5:#fdecea;--b1:#1565c0;--b5:#e3f2fd;
   --p1:#6a1b9a;--p5:#f3e5f5;--o1:#e65100;--o5:#fff3e0;
@@ -18,7 +19,7 @@
   --shadow:0 2px 16px rgba(0,0,0,.07);
   --font:'Noto Sans TC',sans-serif;
 }
-body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:100vh}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:100vh;font-size:calc(16px * var(--fs))}
 .nav{background:var(--g1);padding:14px 16px 12px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:200}
 .nav-title{flex:1;font-size:17px;font-weight:900;color:#fff;letter-spacing:.5px}
 .nav-btn{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;padding:7px 11px;font-size:14px;font-weight:700;cursor:pointer}
@@ -179,6 +180,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
 <div class="toast" id="toast"></div>
 <script>
 const API="https://golf-linebot-4wqe.onrender.com";
+
+function applyFontSize(){
+  const v=S.get("fontSize")||1;
+  document.documentElement.style.setProperty("--fs", v);
+}
+applyFontSize();
 const WD=["一","二","三","四","五","六","日"];
 const EMERGENCY="28746661";
 const S={get(k){try{return JSON.parse(localStorage.getItem(k))}catch{return null}},set(k,v){localStorage.setItem(k,JSON.stringify(v))}};
@@ -493,7 +500,16 @@ function renderRoster(){
 // ══ 設定頁 ══
 function renderSettings(){
   const myName=getMyName(),team=getTeam(),guests=getGuests();
-  let html=`<div class="sec">我自己</div>
+  const fs=S.get("fontSize")||1;
+  let html=`<div class="sec">字體大小</div>
+  <div class="card"><div class="card-body">
+    <div style="display:flex;gap:8px">
+      <button class="btn bsm ${fs==1?'bg':'b-fs'}" style="flex:1;${fs==1?'':'background:#f0f0f0;color:#555;border:1.5px solid #ddd'}" onclick="setFontSize(1)">最小</button>
+      <button class="btn bsm ${fs==1.1?'bg':'b-fs'}" style="flex:1;${fs==1.1?'':'background:#f0f0f0;color:#555;border:1.5px solid #ddd'}" onclick="setFontSize(1.1)">適中</button>
+      <button class="btn bsm ${fs==1.2?'bg':'b-fs'}" style="flex:1;${fs==1.2?'':'background:#f0f0f0;color:#555;border:1.5px solid #ddd'}" onclick="setFontSize(1.2)">最大</button>
+    </div>
+  </div></div>
+  <div class="sec">我自己</div>
   <div class="card"><div class="card-body">
     <div id="myname-label" style="font-size:12px;font-weight:700;color:${myName?'var(--sub)':'var(--r1)'};margin-bottom:5px">
       我的名字（必填，用於報名）${myName?'':'　⬅ 請先填寫'}
@@ -519,6 +535,7 @@ function renderSettings(){
   if(myName)document.getElementById("nav-title").textContent="⛳ "+myName;
   if(!allMembers.length){apiFetch("/api/members-public").then(r=>{allMembers=r.members||[];const dl=document.getElementById("ml");if(dl)dl.innerHTML=allMembers.map(m=>`<option value="${m}">`).join('')}).catch(()=>{})}
 }
+function setFontSize(v){S.set("fontSize",v);applyFontSize();renderSettings();toast("✅ 字體已更新")}
 function saveMyName(v){S.set("myName",v.trim());if(v.trim())document.getElementById("nav-title").textContent="⛳ "+v.trim();toast("✅ 已儲存")}
 function saveTeam(i,v){const t=getTeam();t[i]=v.trim();S.set("myTeam",t);toast("✅ 已儲存");renderSettings()}
 function clearTeam(i){const t=getTeam();t[i]="";S.set("myTeam",t);renderSettings()}

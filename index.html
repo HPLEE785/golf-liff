@@ -180,15 +180,15 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
 <div class="toast" id="toast"></div>
 <script>
 const API="https://golf-linebot-4wqe.onrender.com";
+const WD=["一","二","三","四","五","六","日"];
+const EMERGENCY="28746661";
+const S={get(k){try{return JSON.parse(localStorage.getItem(k))}catch{return null}},set(k,v){localStorage.setItem(k,JSON.stringify(v))}};
 
 function applyFontSize(){
   const v=S.get("fontSize")||1;
   document.documentElement.style.setProperty("--fs", v);
 }
 applyFontSize();
-const WD=["一","二","三","四","五","六","日"];
-const EMERGENCY="28746661";
-const S={get(k){try{return JSON.parse(localStorage.getItem(k))}catch{return null}},set(k,v){localStorage.setItem(k,JSON.stringify(v))}};
 const getMyName=()=>S.get("myName")||"";
 const normName=s=>(s||"").replace(/\s+/g,"").toUpperCase();
 const getTeam=()=>S.get("myTeam")||Array(7).fill("");

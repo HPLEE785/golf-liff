@@ -186,7 +186,7 @@ const S={get(k){try{return JSON.parse(localStorage.getItem(k))}catch{return null
 
 function applyFontSize(){
   const v=S.get("fontSize")||0;
-  document.documentElement.style.setProperty("--fs", v);
+  document.documentElement.style.setProperty("--fs", v+"px");
 }
 applyFontSize();
 const getMyName=()=>S.get("myName")||"";

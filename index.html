@@ -140,6 +140,18 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
 .toggle-slider:before{content:"";position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s}
 .toggle input:checked + .toggle-slider{background:var(--g3)}
 .toggle input:checked + .toggle-slider:before{transform:translateX(20px)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:10px}
+.cal-head{text-align:center;font-size:calc(10px + var(--fs));font-weight:900;color:var(--muted);padding:4px 0}
+.cal-day{text-align:center;padding:7px 2px;border-radius:8px;font-size:calc(12px + var(--fs));font-weight:700;cursor:pointer;border:1.5px solid transparent;transition:all .15s}
+.cal-day.today{border-color:var(--g3);color:var(--g3)}
+.cal-day.sel{background:var(--g2);color:#fff;border-color:var(--g2)}
+.cal-day.exists{background:#fff3e0;color:var(--o1);cursor:not-allowed}
+.cal-day.past{color:#ccc;cursor:not-allowed}
+.cal-day.empty{cursor:default}
+.cal-day:not(.past):not(.exists):not(.empty):not(.sel):hover{background:var(--g5);border-color:var(--g3)}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.cal-nav-btn{background:none;border:1.5px solid var(--border);border-radius:8px;padding:4px 12px;font-size:calc(14px + var(--fs));cursor:pointer;color:var(--ink)}
+.cal-month{font-size:calc(14px + var(--fs));font-weight:900}
 .reg-btn{font-size:calc(12px + var(--fs));padding:4px 10px;background:var(--g2);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-family:var(--font)}
 @keyframes blink{0%,100%{border-color:var(--r1);background:#fff0f0}50%{border-color:var(--border);background:#fff}}
 .blink-input{animation:blink 1s step-start infinite}
@@ -195,7 +207,7 @@ const getTeam=()=>S.get("myTeam")||Array(7).fill("");
 const getGuests=()=>S.get("myGuests")||Array(11).fill("");
 let scheduleData=[],rosterData=[],allMembers=[];
 let isAdmin=false,adminChecked=false,logDays=7,logSearch="",allLogs=[],adminsData=[];
-let teeTimes=[],schedulable=[];
+let teeTimes=[],schedulable=[],calYear=0,calMonth=0,calSelDate="";
 
 function wdn(ds){const d=new Date(ds+"T00:00:00");return WD[d.getDay()===0?6:d.getDay()-1]}
 function mmdd(ds){const[,m,d]=ds.split("-");return m+"/"+d}
@@ -553,6 +565,8 @@ async function loadAdmin(){
   try{
     const[admR,tee,sched]=await Promise.all([apiFetch("/api/admin/admins"),apiFetch("/api/admin/tee-times"),apiFetch("/api/admin/schedulable-dates")]);
     adminsData=admR.admins||[];teeTimes=tee.tee_times||[];schedulable=sched.dates||[];
+    // 初始化月曆年月
+    const now=new Date();calYear=now.getFullYear();calMonth=now.getMonth();calSelDate="";
   }catch(e){console.error("loadAdmin error",e)}
   renderAdmTee();
   // 版本資訊（背景載入，不阻塞頁面）
@@ -596,12 +610,57 @@ function renderAdmTee(){
   el.innerHTML=html;
 }
 
+function buildCalHtml(){
+  const WDS=["日","一","二","三","四","五","六"];
+  const existDates=new Set(schedulable.filter(d=>d.exists).map(d=>d.date));
+  const availDates=new Set(schedulable.map(d=>d.date));
+  const today=new Date();today.setHours(0,0,0,0);
+  const firstDay=new Date(calYear,calMonth,1);
+  const lastDay=new Date(calYear,calMonth+1,0);
+  const todayStr=today.toISOString().slice(0,10);
+  const nowDate=new Date();
+  const maxDate=new Date(nowDate);maxDate.setDate(maxDate.getDate()+60);
+  let html=`<div class="cal-nav">
+    <button class="cal-nav-btn" onclick="calPrev()">‹</button>
+    <div class="cal-month">${calYear}年${calMonth+1}月</div>
+    <button class="cal-nav-btn" onclick="calNext()">›</button>
+  </div><div class="cal">`;
+  WDS.forEach(w=>html+=`<div class="cal-head">${w}</div>`);
+  // 填空白
+  for(let i=0;i<firstDay.getDay();i++) html+=`<div class="cal-day empty"></div>`;
+  for(let d=1;d<=lastDay.getDate();d++){
+    const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dObj=new Date(ds+"T00:00:00");
+    const isPast=dObj<today;
+    const isToday=ds===todayStr;
+    const isExists=existDates.has(ds);
+    const isSel=ds===calSelDate;
+    const isAvail=availDates.has(ds);
+    let cls="cal-day";
+    if(isPast||!isAvail) cls+=" past";
+    else if(isExists) cls+=" exists";
+    else if(isSel) cls+=" sel";
+    else if(isToday) cls+=" today";
+    const onclick=(isPast||!isAvail||isExists)?"":`onclick="calSel('${ds}')"`;
+    const title=isExists?"已建立":"";
+    html+=`<div class="${cls}" ${onclick} title="${title}">${d}</div>`;
+  }
+  html+="</div>";
+  if(calSelDate) html+=`<div style="text-align:center;font-size:calc(13px + var(--fs));font-weight:700;color:var(--g2);margin-bottom:8px">已選：${mmdd(calSelDate)} 星期${wdn(calSelDate)}</div>`;
+  else html+=`<div style="text-align:center;font-size:calc(12px + var(--fs));color:var(--muted);margin-bottom:8px">請點選日期</div>`;
+  return html;
+}
+function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}document.getElementById("cal-wrap").innerHTML=buildCalHtml()}
+function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}document.getElementById("cal-wrap").innerHTML=buildCalHtml()}
+function calSel(ds){calSelDate=ds;document.getElementById("cal-wrap").innerHTML=buildCalHtml();document.getElementById("tee-date").value=ds}
+
 function showAddTeeModal(){
   if(!isAdmin){toast("⚠️ 非管理者");return}
-  const opts=schedulable.map(d=>`<option value="${d}">${mmdd(d)} 星期${wdn(d)}</option>`).join("");
+  const now=new Date();calYear=now.getFullYear();calMonth=now.getMonth();calSelDate="";
   openModal(`<div class="modal-title">＋ 新增球敘</div><div class="modal-sub">選擇日期與設定</div>
   <div style="font-size:12px;font-weight:700;color:var(--sub);margin-bottom:5px">日期</div>
-  <select class="input" id="tee-date" style="margin-bottom:10px">${opts}</select>
+  <div id="cal-wrap">${buildCalHtml()}</div>
+  <input type="hidden" id="tee-date" value="">
   <div style="font-size:12px;font-weight:700;color:var(--sub);margin-bottom:5px">組數</div>
   <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap" id="group-btns">
     ${[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20].map(n=>`<button class="tee-btn edit" style="padding:7px 10px" onclick="selG(${n},this)">${n}</button>`).join("")}
@@ -625,7 +684,8 @@ async function submitAddTee(){
   const maxGroups=parseInt(document.getElementById("tee-groups").value||"0");
   const hasDinner=document.getElementById("tee-dinner").checked;
   const note=document.getElementById("tee-note").value.trim();
-  if(!playDate||maxGroups<=0){toast("⚠️ 請選擇組數");return}
+  if(!playDate){toast("⚠️ 請選擇日期");return}
+  if(maxGroups<=0){toast("⚠️ 請選擇組數");return}
   try{
     await apiFetch("/api/admin/set-tee",{method:"POST",body:JSON.stringify({operator:getMyName(),play_date:playDate,max_groups:maxGroups,has_dinner:hasDinner,note})});
     toast("✅ 球敘設定成功");closeModal();

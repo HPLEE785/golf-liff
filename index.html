@@ -171,6 +171,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
   <div class="adm-page" id="adm-admins"><div class="loading"><div class="spinner"></div></div></div>
   <div class="adm-page" id="adm-members"><div class="loading"><div class="spinner"></div></div></div>
   <div class="adm-page" id="adm-logs"><div class="loading"><div class="spinner"></div></div></div>
+  <div id="version-bar" style="margin-top:18px;padding:10px 14px;background:#f5f5f5;border-radius:10px;font-size:11px;color:#999;text-align:center;line-height:1.8">載入版本中...</div>
 </div>
 <div class="modal-bg" id="modal-bg" onclick="closeModal(event)">
   <div class="modal"><button class="modal-close" onclick="closeModal()">×</button><div id="modal-inner"></div></div>
@@ -257,7 +258,7 @@ function renderRegister(){
   let html='<div class="sec">本週場次</div>';
   for(const d of scheduleData){
     const roster=rosterData.find(r=>r.play_date===d.play_date);
-    const allPlayers=(roster?.players||[]).filter(p=>!p.is_waitlist);
+    const allPlayers=(roster?.players||[]); // 包含候補，讓候補也可顯示和取消
     const myPlayers=allPlayers.filter(p=>allMine.includes(p.name));
     const iReg=myName&&allPlayers.some(p=>p.name===myName&&!p.is_guest);
     // 也檢查 name* 是否已報名（非成員模式）
@@ -299,8 +300,8 @@ function renderRegister(){
       // 找該隊員報名了哪些場次
       const days=scheduleData.filter(d=>{
         const r=rosterData.find(x=>x.play_date===d.play_date);
-        return r&&r.players.some(p=>p.name===n&&!p.is_waitlist&&!p.is_guest);
-      }).map(d=>wdn(d.play_date)).join("");
+        return r&&r.players.some(p=>p.name===n&&!p.is_guest);
+      }).map(d=>wdn(d.play_date)).join(""); // 候補也顯示已報星期
       const label=days?`${n} (${days})`:n;
       html+=`<button class="mb" style="background:#e3f2fd;border-color:#90caf9" onclick="showRegModal('${n}',false)">${label}</button>`;
     });
@@ -313,8 +314,8 @@ function renderRegister(){
     guests.forEach(n=>{
       const days=scheduleData.filter(d=>{
         const r=rosterData.find(x=>x.play_date===d.play_date);
-        return r&&r.players.some(p=>p.name===n&&!p.is_waitlist);
-      }).map(d=>wdn(d.play_date)).join("");
+        return r&&r.players.some(p=>p.name===n);
+      }).map(d=>wdn(d.play_date)).join(""); // 候補也顯示已報星期
       const label=days?`${n} (${days})`:n;
       html+=`<button class="mb" style="background:#d8f3dc;border-color:#95d5b2" onclick="showRegModal('${n}',true)">${label}</button>`;
     });
@@ -344,7 +345,7 @@ function showRegModal(name,isGuest){
   for(const d of scheduleData){
     const wd=wdn(d.play_date);
     const roster=rosterData.find(r=>r.play_date===d.play_date);
-    const already=roster&&roster.players.some(p=>p.name===name&&!p.is_waitlist&&(isGuest?p.is_guest:!p.is_guest));
+    const already=roster&&roster.players.some(p=>p.name===name&&(isGuest?p.is_guest:!p.is_guest));
     const remain=Math.max(0,(d.max_players||0)-d.registered);
     html+=`<div class="card" style="margin-bottom:10px">
     <div class="ds ${d.has_dinner?'dn':'pl'}">
@@ -537,6 +538,18 @@ async function loadAdmin(){
     adminsData=admR.admins||[];teeTimes=tee.tee_times||[];schedulable=sched.dates||[];
   }catch(e){console.error("loadAdmin error",e)}
   renderAdmTee();
+  // 版本資訊（背景載入，不阻塞頁面）
+  apiFetch("/api/version").then(v=>{
+    const bar=document.getElementById("version-bar");
+    if(!bar)return;
+    bar.innerHTML=
+      `🖥️ app <b>${v.app}</b> &nbsp;|&nbsp; 🗄️ database <b>${v.database}</b>`+
+      `<br><span style="font-family:monospace">${v.bot_version}</span>`+
+      `&nbsp;&nbsp;🕐 ${v.server_time}`;
+  }).catch(()=>{
+    const bar=document.getElementById("version-bar");
+    if(bar)bar.textContent="⚠️ 版本資訊載入失敗";
+  });
 }
 
 function renderAdmTee(){

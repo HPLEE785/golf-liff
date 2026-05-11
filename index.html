@@ -13,27 +13,18 @@
   --g1:#1b4332;--g2:#2d6a4f;--g3:#40916c;--g5:#d8f3dc;
   --r1:#c0392b;--r5:#fdecea;--b1:#1565c0;--b5:#e3f2fd;
   --p1:#6a1b9a;--p5:#f3e5f5;--o1:#e65100;--o5:#fff3e0;
-  --ink:#1a1a1a;--sub:#666;--muted:#999;
+  --ink:#1a1a1a;--sub:#1a1a1a;--muted:#1a1a1a;
   --border:#e8e8e8;--bg:#f4f6f4;--card:#fff;
   --radius:14px;--rsm:10px;
   --shadow:0 2px 16px rgba(0,0,0,.07);
   --font:'Noto Sans TC',sans-serif;
 }
 body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:100vh}
-/* 全站：無斜體、全黑、粗體 */
-*{font-style:normal !important;color:var(--ink) !important;font-weight:700 !important}
+/* 全站：無斜體、粗體 */
+*{font-style:normal !important;font-weight:700 !important}
 /* 深色背景 → 全白 */
-.nav,.nav *,
-.bg,.bg *,
-.br,.br *,
-.bb,.bb *,
-.bp,.bp *,
-.pn.r,.pn.r *,
-.pn.w,.pn.w *{color:#fff !important}
-/* tab 顏色保留 */
-.tab{color:var(--muted) !important}
-.tab.active{color:var(--g2) !important}
-/* spinner 不需要 color */
+.nav *,.bg *,.br *,.bb *,.bp *,.pn.r *,.pn.w *{color:#fff !important}
+.nav-btn{color:#fff !important}
 .nav{background:var(--g1);padding:14px 16px 12px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:200}
 .nav-title{flex:1;font-size:calc(17px + var(--fs));font-weight:900;color:#fff;letter-spacing:.5px}
 .nav-btn{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;padding:7px 11px;font-size:calc(14px + var(--fs));font-weight:700;cursor:pointer}

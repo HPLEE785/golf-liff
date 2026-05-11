@@ -608,6 +608,7 @@ function renderAdmTee(){
   data-date="${t.play_date}" data-groups="${t.max_groups}"
   data-dinner="${t.has_dinner}" data-note="${encodeURIComponent(t.note||'')}"
   onclick="showEditTeeModalBtn(this)">修改</button>
+          <button class="tee-btn edit" style="background:var(--p5);color:var(--p1)" ${dis} onclick="showImportModal('${t.play_date}')">匯入</button>
           <button class="tee-btn del" ${dis} onclick="deleteTee('${t.play_date}')">刪除</button>
         </div>
       </div>${t.note?`<div class="tee-note">📝 ${t.note}</div>`:''}</div>`;
@@ -699,6 +700,38 @@ async function submitAddTee(){
   }catch(e){toast("❌ 設定失敗")}
 }
 
+function showImportModal(playDate){
+  if(!isAdmin){toast("⚠️ 非管理者");return}
+  openModal(`<div class="modal-title">匯入打球名單</div>
+  <div class="modal-sub">${mmdd(playDate)} 星期${wdn(playDate)}　一行一個名字</div>
+  <div style="display:flex;gap:6px;margin-bottom:6px">
+    <button class="tee-btn edit" onclick="navigator.clipboard.readText().then(t=>document.getElementById('import-names').value=t).catch(()=>toast('⚠️ 無法貼上'))">貼上</button>
+    <button class="tee-btn edit" onclick="document.getElementById('import-names').value=''">清空</button>
+  </div>
+  <textarea class="textarea" id="import-names" placeholder="張三&#10;李四&#10;王五" style="min-height:160px"></textarea>
+  <button class="btn bg" style="margin-top:12px" onclick="confirmImport('${playDate}')">✅ 確認加入打球名單</button>`);
+}
+async function confirmImport(playDate){
+  const raw=(document.getElementById("import-names")?.value||"");
+  const names=raw.split("\n").map(n=>n.trim()).filter(Boolean);
+  if(!names.length){toast("⚠️ 請輸入名單");return}
+  const operator=getMyName();
+  closeModal();
+  toast("匯入中...");
+  let added=0,skipped=0;
+  for(const name of names){
+    try{
+      const res=await apiFetch("/api/register-by-name",{method:"POST",body:JSON.stringify({
+        name, play_date:playDate, dinner_type:"", operator, invited_by:operator, is_guest:false
+      })});
+      if(res.status==="success") added++;
+      else skipped++;
+    }catch(e){skipped++;}
+  }
+  toast(`✅ 加入 ${added} 人，跳過 ${skipped} 人`);
+  const tee=await apiFetch("/api/admin/tee-times");teeTimes=tee.tee_times||[];renderAdmTee();
+  scheduleData=[];
+}
 function showEditTeeModalBtn(btn){
   const playDate=btn.dataset.date;
   const maxGroups=parseInt(btn.dataset.groups);

@@ -20,6 +20,15 @@
   --font:'Noto Sans TC',sans-serif;
 }
 body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:100vh}
+*{font-style:normal !important}
+/* 淺色背景區塊 → 全黑文字 */
+.page *,.modal *{color:var(--ink)}
+/* 深色背景 → 全白文字 */
+.nav *,.bg *,.br *,.bb *,.bp *,.pn.r *,.pn.w *,
+.nav,.bg,.br,.bb,.bp,.pn.r,.pn.w{color:#fff !important}
+/* tab 顏色保留 */
+.tab{color:var(--muted)}
+.tab.active{color:var(--g2)}
 .nav{background:var(--g1);padding:14px 16px 12px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:200}
 .nav-title{flex:1;font-size:calc(17px + var(--fs));font-weight:900;color:#fff;letter-spacing:.5px}
 .nav-btn{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;padding:7px 11px;font-size:calc(14px + var(--fs));font-weight:700;cursor:pointer}
@@ -152,7 +161,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
 .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .cal-nav-btn{background:none;border:1.5px solid var(--border);border-radius:8px;padding:4px 12px;font-size:calc(14px + var(--fs));cursor:pointer;color:var(--ink)}
 .cal-month{font-size:calc(14px + var(--fs));font-weight:900}
-.pg-large *{font-size:calc(15px + var(--fs)) !important;font-weight:700 !important;font-style:normal !important;color:var(--ink) !important}
+
 .reg-btn{font-size:calc(12px + var(--fs));padding:4px 10px;background:var(--g2);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-family:var(--font)}
 @keyframes blink{0%,100%{border-color:var(--r1);background:#fff0f0}50%{border-color:var(--border);background:#fff}}
 .blink-input{animation:blink 1s step-start infinite}
@@ -170,8 +179,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
   <button class="tab" data-tab="settings" onclick="switchTab(this)">⚙️ 我的</button>
   <button class="tab" data-tab="admin" onclick="switchTab(this)">🔧 管理</button>
 </div>
-<div class="page active pg-large" id="page-register"><div id="reg-content"><div class="loading"><div class="spinner"></div>載入中...</div></div></div>
-<div class="page pg-large" id="page-roster"><div id="roster-content"><div class="loading"><div class="spinner"></div>載入中...</div></div></div>
+<div class="page active" id="page-register"><div id="reg-content"><div class="loading"><div class="spinner"></div>載入中...</div></div></div>
+<div class="page" id="page-roster"><div id="roster-content"><div class="loading"><div class="spinner"></div>載入中...</div></div></div>
 <div class="page" id="page-settings"><div id="settings-content"></div></div>
 <div class="page" id="page-admin">
   <div id="admin-lock-banner" class="lock-banner" style="display:none">🔒 非管理者，功能已鎖定。輸入緊急密碼可解鎖。</div>

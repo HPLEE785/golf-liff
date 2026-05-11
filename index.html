@@ -152,6 +152,18 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
 .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .cal-nav-btn{background:none;border:1.5px solid var(--border);border-radius:8px;padding:4px 12px;font-size:calc(14px + var(--fs));cursor:pointer;color:var(--ink)}
 .cal-month{font-size:calc(14px + var(--fs));font-weight:900}
+.pg-large .sec{font-size:calc(15px + var(--fs))}
+.pg-large .ds-name{font-size:calc(19px + var(--fs))}
+.pg-large .ds-stat{font-size:calc(15px + var(--fs))}
+.pg-large .badge{font-size:calc(14px + var(--fs))}
+.pg-large .pname{font-size:calc(18px + var(--fs))}
+.pg-large .tag{font-size:calc(14px + var(--fs))}
+.pg-large .edit-hint{font-size:calc(14px + var(--fs))}
+.pg-large .mb{font-size:calc(17px + var(--fs))}
+.pg-large .btn{font-size:calc(18px + var(--fs))}
+.pg-large .bsm{font-size:calc(17px + var(--fs))}
+.pg-large .tee-date{font-size:calc(19px + var(--fs))}
+.pg-large .tee-stat{font-size:calc(15px + var(--fs))}
 .reg-btn{font-size:calc(12px + var(--fs));padding:4px 10px;background:var(--g2);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-family:var(--font)}
 @keyframes blink{0%,100%{border-color:var(--r1);background:#fff0f0}50%{border-color:var(--border);background:#fff}}
 .blink-input{animation:blink 1s step-start infinite}
@@ -169,8 +181,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
   <button class="tab" data-tab="settings" onclick="switchTab(this)">⚙️ 我的</button>
   <button class="tab" data-tab="admin" onclick="switchTab(this)">🔧 管理</button>
 </div>
-<div class="page active" id="page-register"><div id="reg-content"><div class="loading"><div class="spinner"></div>載入中...</div></div></div>
-<div class="page" id="page-roster"><div id="roster-content"><div class="loading"><div class="spinner"></div>載入中...</div></div></div>
+<div class="page active pg-large" id="page-register"><div id="reg-content"><div class="loading"><div class="spinner"></div>載入中...</div></div></div>
+<div class="page pg-large" id="page-roster"><div id="roster-content"><div class="loading"><div class="spinner"></div>載入中...</div></div></div>
 <div class="page" id="page-settings"><div id="settings-content"></div></div>
 <div class="page" id="page-admin">
   <div id="admin-lock-banner" class="lock-banner" style="display:none">🔒 非管理者，功能已鎖定。輸入緊急密碼可解鎖。</div>

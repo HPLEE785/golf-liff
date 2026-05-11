@@ -614,7 +614,22 @@ function renderAdmTee(){
       </div>${t.note?`<div class="tee-note">📝 ${t.note}</div>`:''}</div>`;
     });
   }
+  html+=`<div style="margin-top:20px;padding-top:16px;border-top:1px dashed var(--border)">
+    <button class="btn br bsm" ${dis} onclick="clearAllData()">🗑️ 清除全部場次與報名資料</button>
+  </div>`;
   el.innerHTML=html;
+}
+async function clearAllData(){
+  if(!isAdmin){toast("⚠️ 非管理者");return}
+  if(!confirm("此操作將清除所有場次、報名記錄。\n成員名單和管理者名單保留。\n\n確定要清除嗎？"))return;
+  if(!confirm("再次確認：清除後無法復原，確定嗎？"))return;
+  try{
+    await apiFetch("/api/admin/clear-all",{method:"POST",body:JSON.stringify({operator:getMyName()})});
+    toast("✅ 已清除所有場次與報名資料");
+    teeTimes=[];schedulable=[];scheduleData=[];rosterData=[];
+    const sched=await apiFetch("/api/admin/schedulable-dates");schedulable=sched.dates||[];
+    renderAdmTee();
+  }catch(e){toast("❌ 清除失敗")}
 }
 
 function buildCalHtml(){

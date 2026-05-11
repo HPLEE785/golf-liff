@@ -152,18 +152,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
 .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .cal-nav-btn{background:none;border:1.5px solid var(--border);border-radius:8px;padding:4px 12px;font-size:calc(14px + var(--fs));cursor:pointer;color:var(--ink)}
 .cal-month{font-size:calc(14px + var(--fs));font-weight:900}
-.pg-large .sec{font-size:calc(15px + var(--fs))}
-.pg-large .ds-name{font-size:calc(19px + var(--fs))}
-.pg-large .ds-stat{font-size:calc(15px + var(--fs))}
-.pg-large .badge{font-size:calc(14px + var(--fs))}
-.pg-large .pname{font-size:calc(18px + var(--fs))}
-.pg-large .tag{font-size:calc(14px + var(--fs))}
-.pg-large .edit-hint{font-size:calc(14px + var(--fs))}
-.pg-large .mb{font-size:calc(17px + var(--fs))}
-.pg-large .btn{font-size:calc(18px + var(--fs))}
-.pg-large .bsm{font-size:calc(17px + var(--fs))}
-.pg-large .tee-date{font-size:calc(19px + var(--fs))}
-.pg-large .tee-stat{font-size:calc(15px + var(--fs))}
+.pg-large *{font-size:calc(15px + var(--fs)) !important;font-weight:700 !important}
 .reg-btn{font-size:calc(12px + var(--fs));padding:4px 10px;background:var(--g2);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-family:var(--font)}
 @keyframes blink{0%,100%{border-color:var(--r1);background:#fff0f0}50%{border-color:var(--border);background:#fff}}
 .blink-input{animation:blink 1s step-start infinite}
@@ -305,7 +294,7 @@ function renderRegister(){
           ${showRegBtn?`<button class="reg-btn" onclick="quickReg('${myName}','${d.play_date}',${d.has_dinner})">我要報名</button>`:''}
           ${(iReg||iRegStar)?'<span class="badge b-ok">✓ 已報名</span>':''}
         </div>
-        ${d.note?`<div style="font-size:12px;color:var(--sub);margin-top:2px;font-style:italic">📝 ${d.note}</div>`:''}
+        ${d.note?`<div style="font-size:calc(12px + var(--fs));color:var(--sub);margin-top:2px;font-style:italic">📝 ${d.note}</div>`:''}
         <div class="ds-stat">報名 ${d.registered} 人 | 可報 ${remain} 位</div>
       </div>
     </div>`;
@@ -382,7 +371,7 @@ function showRegModal(name,isGuest){
     <div class="ds ${d.has_dinner?'dn':'pl'}">
       <div class="ds-info">
         <div class="ds-name">${mmdd(d.play_date)} 星期${wd}${d.has_dinner?' 🍽️':''}</div>
-        ${d.note?`<div style="font-size:12px;color:#888;margin-top:1px;font-style:italic">📝 ${d.note}</div>`:''}
+        ${d.note?`<div style="font-size:calc(12px + var(--fs));color:#888;margin-top:1px;font-style:italic">📝 ${d.note}</div>`:''}
         <div class="ds-stat">已報名 ${d.registered} 人 | 剩 ${remain} 位</div>
       </div>
       ${already?'<span class="badge b-ok">✓ 已報名</span>':''}
@@ -504,7 +493,7 @@ function renderRoster(){
           <span>${mmdd(sched.play_date)} 星期${wdn(sched.play_date)}${sched.has_dinner?' 🍽️':''}</span>
           ${iReg?'<span class="badge b-ok">✓ 已報名</span>':''}
         </div>
-        ${sched.note?`<div style="font-size:12px;color:var(--sub);margin-top:2px;font-style:italic">📝 ${sched.note}</div>`:''}
+        ${sched.note?`<div style="font-size:calc(12px + var(--fs));color:var(--sub);margin-top:2px;font-style:italic">📝 ${sched.note}</div>`:''}
         <div class="ds-stat">報名 ${reg.length} 人 | 可報 ${remain} 位${wl.length?" | 候補 "+wl.length+" 人":""}</div>
       </div>
     </div>

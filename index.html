@@ -20,15 +20,20 @@
   --font:'Noto Sans TC',sans-serif;
 }
 body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:100vh}
-*{font-style:normal !important}
-/* 淺色背景區塊 → 全黑文字 */
-.page *,.modal *{color:var(--ink)}
-/* 深色背景 → 全白文字 */
-.nav *,.bg *,.br *,.bb *,.bp *,.pn.r *,.pn.w *,
-.nav,.bg,.br,.bb,.bp,.pn.r,.pn.w{color:#fff !important}
+/* 全站：無斜體、全黑、粗體 */
+*{font-style:normal !important;color:var(--ink) !important;font-weight:700 !important}
+/* 深色背景 → 全白 */
+.nav,.nav *,
+.bg,.bg *,
+.br,.br *,
+.bb,.bb *,
+.bp,.bp *,
+.pn.r,.pn.r *,
+.pn.w,.pn.w *{color:#fff !important}
 /* tab 顏色保留 */
-.tab{color:var(--muted)}
-.tab.active{color:var(--g2)}
+.tab{color:var(--muted) !important}
+.tab.active{color:var(--g2) !important}
+/* spinner 不需要 color */
 .nav{background:var(--g1);padding:14px 16px 12px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:200}
 .nav-title{flex:1;font-size:calc(17px + var(--fs));font-weight:900;color:#fff;letter-spacing:.5px}
 .nav-btn{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;padding:7px 11px;font-size:calc(14px + var(--fs));font-weight:700;cursor:pointer}

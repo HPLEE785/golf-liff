@@ -335,8 +335,9 @@ function renderRegister(){
     }
     html+='</div>';
   }
+  html+='<div class="sec">常用隊員</div>';
   if(team.length){
-    html+='<div class="sec">常用隊員</div><div class="card" style="background:#e3f2fd;border:1.5px solid #90caf9"><div class="card-body"><div class="mg">';
+    html+='<div class="card" style="background:#e3f2fd;border:1.5px solid #90caf9"><div class="card-body"><div class="mg">';
     team.forEach(n=>{
       // 找該隊員報名了哪些場次
       const days=scheduleData.filter(d=>{
@@ -347,6 +348,8 @@ function renderRegister(){
       html+=`<button class="mb" style="background:#e3f2fd;border-color:#90caf9" onclick="showRegModal('${n}',false)">${label}</button>`;
     });
     html+='</div></div></div>';
+  }else{
+    html+='<div class="card"><div class="card-body" style="text-align:center;padding:16px">若要幫隊員報名，需到「⚙️ 我的」頁面建立【常用隊員】名單方可替隊員報名</div></div>';
   }
   html+=`<div class="sec">常用來賓</div><div style="font-size:11px;color:var(--sub);margin:-4px 0 8px 2px">來賓報名開放時間：${guestRuleLabel}</div>`;
   if(!guestOk){html+=`<div class="card"><div class="card-body" style="text-align:center;padding:16px">⏰ ${guestRuleLabel} 開放來賓報名</div></div>`}

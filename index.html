@@ -213,7 +213,7 @@ const getTeam=()=>S.get("myTeam")||Array(7).fill("");
 const getGuests=()=>S.get("myGuests")||Array(11).fill("");
 let scheduleData=[],rosterData=[],allMembers=[];
 let isAdmin=false,adminChecked=false,logDays=7,logSearch="",allLogs=[],adminsData=[];
-let teeTimes=[],schedulable=[],calYear=0,calMonth=0,calSelDate="";
+let teeTimes=[],schedulable=[],calYear=0,calMonth=0,calSelDate="",guestRule="tue_00";
 
 function wdn(ds){const d=new Date(ds+"T00:00:00");return WD[d.getDay()===0?6:d.getDay()-1]}
 function mmdd(ds){const[,m,d]=ds.split("-");return m+"/"+d}
@@ -262,8 +262,8 @@ async function loadRegister(){
   const el=document.getElementById("reg-content");
   el.innerHTML='<div class="loading"><div class="spinner"></div>載入中...</div>';
   try{
-    const[s,r,m]=await Promise.all([apiFetch("/api/schedule-public"),apiFetch("/api/registrations-public"),apiFetch("/api/members-public")]);
-    scheduleData=s.dates||[];rosterData=r.dates||[];allMembers=m.members||[];
+    const[s,r,m,g]=await Promise.all([apiFetch("/api/schedule-public"),apiFetch("/api/registrations-public"),apiFetch("/api/members-public"),apiFetch("/api/guest-open-rule")]);
+    scheduleData=s.dates||[];rosterData=r.dates||[];allMembers=m.members||[];guestRule=g.rule||"tue_00";
     renderRegister();
   }catch(e){el.innerHTML='<div class="empty">⚠️ 載入失敗，請重試</div>'}
 }
@@ -278,8 +278,24 @@ function renderRegister(){
   if(myName) allMine.push(myName+"*");
   if(!scheduleData.length){el.innerHTML='<div class="empty"><div style="font-size:40px;margin-bottom:10px">🏌️</div>本週尚無開放場次</div>';return}
   const now=new Date();
-  const mon=new Date(now);mon.setDate(now.getDate()-(now.getDay()===0?6:now.getDay()-1));mon.setHours(0,0,0,0);
-  const guestOk=now>=mon;
+  // 來賓開放時間根據 guestRule 動態計算
+  function guestOpenTime(rule){
+    const d=new Date(now);
+    const dow=d.getDay(); // 0=日,1=一...6=六
+    // 找本週一
+    const diff=dow===0?-6:1-dow;
+    d.setDate(d.getDate()+diff);
+    d.setSeconds(0);d.setMilliseconds(0);
+    if(rule==="mon_18"){d.setHours(18,0,0,0)}
+    else if(rule==="mon_20"){d.setHours(20,0,0,0)}
+    else if(rule==="mon_22"){d.setHours(22,0,0,0)}
+    else{d.setDate(d.getDate()+1);d.setHours(0,0,0,0)} // tue_00
+    return d;
+  }
+  const ruleLabels={"mon_18":"週一 18:00後","mon_20":"週一 20:00後","mon_22":"週一 22:00後","tue_00":"週二 00:00後"};
+  const openTime=guestOpenTime(guestRule);
+  const guestOk=now>=openTime;
+  const guestRuleLabel=ruleLabels[guestRule]||"週二 00:00後";
   let html='<div class="sec">本週場次</div>';
   for(const d of scheduleData){
     const roster=rosterData.find(r=>r.play_date===d.play_date);
@@ -332,8 +348,8 @@ function renderRegister(){
     });
     html+='</div></div></div>';
   }
-  html+='<div class="sec">常用來賓</div>';
-  if(!guestOk){html+='<div class="card"><div class="card-body" style="color:var(--muted);font-size:12px;text-align:center;padding:16px">週一 00:00 後開放來賓報名</div></div>'}
+  html+=`<div class="sec">常用來賓</div><div style="font-size:11px;color:var(--sub);margin:-4px 0 8px 2px">來賓報名開放時間：${guestRuleLabel}</div>`;
+  if(!guestOk){html+=`<div class="card"><div class="card-body" style="text-align:center;padding:16px">⏰ ${guestRuleLabel} 開放來賓報名</div></div>`}
   else if(guests.length){
     html+='<div class="card" style="background:#d8f3dc;border:1.5px solid #95d5b2"><div class="card-body"><div class="mg">';
     guests.forEach(n=>{
@@ -345,7 +361,7 @@ function renderRegister(){
       html+=`<button class="mb" style="background:#d8f3dc;border-color:#95d5b2" onclick="showRegModal('${n}',true)">${label}</button>`;
     });
     html+='</div></div></div>';
-  }else{html+='<div class="card"><div class="card-body" style="color:var(--muted);font-size:13px;text-align:center;padding:16px">請至「⚙️ 我的」設定常用來賓</div></div>'}
+  }else{html+='<div class="card"><div class="card-body" style="text-align:center;padding:16px">若要幫來賓報名，需到「⚙️ 我的」頁面建立【常用來賓】名單方可替來賓報名</div></div>'}
   el.innerHTML=html;
 }
 
@@ -817,6 +833,16 @@ function renderAdmAdmins(){
     </div>`;
   });
   html+=`<button class="btn bg" style="margin-top:12px" ${dis} onclick="saveAdmins()">💾 儲存管理者名單</button>
+  <div style="margin-top:20px;padding-top:16px;border-top:1px dashed var(--border)">
+    <div class="sec" style="margin-top:0">來賓報名開放時間</div>
+    <select class="input" id="guest-rule-sel" style="margin-bottom:10px" ${dis}>
+      <option value="mon_18">週一 18:00 後</option>
+      <option value="mon_20">週一 20:00 後</option>
+      <option value="mon_22">週一 22:00 後</option>
+      <option value="tue_00">週二 00:00 後（預設）</option>
+    </select>
+    <button class="btn bb bsm" ${dis} onclick="saveGuestRule()">💾 儲存來賓開放時間</button>
+  </div>
   <div style="margin-top:24px;padding-top:16px;border-top:1px dashed var(--border)">
     <div style="font-size:12px;color:var(--muted);margin-bottom:8px">緊急解鎖（輸入密碼後按解鎖）</div>
     <div style="display:flex;gap:8px">
@@ -825,11 +851,25 @@ function renderAdmAdmins(){
     </div>
   </div>`;
   el.innerHTML=html;
+  // 設定下拉選單當前值
+  apiFetch("/api/guest-open-rule").then(r=>{
+    const sel=document.getElementById("guest-rule-sel");
+    if(sel) sel.value=r.rule||"tue_00";
+  }).catch(()=>{});
 }
 
 function updateAdmin(i,field,val){if(!adminsData[i])adminsData[i]={display_name:"",line_user_id:""};adminsData[i][field]=val.trim()}
 function clearAdmin(i){if(!isAdmin){toast("⚠️ 非管理者");return}adminsData[i]={display_name:"",line_user_id:""};renderAdmAdmins()}
 
+async function saveGuestRule(){
+  if(!isAdmin){toast("⚠️ 非管理者");return}
+  const rule=document.getElementById("guest-rule-sel")?.value||"tue_00";
+  try{
+    await apiFetch("/api/admin/save-guest-rule",{method:"POST",body:JSON.stringify({operator:getMyName(),rule})});
+    guestRule=rule;
+    toast("✅ 來賓開放時間已儲存");
+  }catch(e){toast("❌ 儲存失敗")}
+}
 async function saveAdmins(){
   if(!isAdmin){toast("⚠️ 非管理者");return}
   const valid=adminsData.filter(a=>a.display_name&&a.line_user_id);

@@ -601,7 +601,7 @@ async function loadAdmin(){
     bar.innerHTML=
       `🖥️ app <b>${v.app}</b> &nbsp;|&nbsp; 🗄️ database <b>${v.database}</b>`+
       `<br><span style="font-family:monospace">${v.bot_version}</span>`+
-      `&nbsp;&nbsp;🕐 ${v.server_time}`;
+      `&nbsp;&nbsp;🚀 部署：${v.deploy_time}`;
   }).catch(()=>{
     const bar=document.getElementById("version-bar");
     if(bar)bar.textContent="⚠️ 版本資訊載入失敗";
@@ -835,22 +835,12 @@ function renderAdmAdmins(){
       <button class="admin-del" ${dis} onclick="clearAdmin(${i})">×</button>
     </div>`;
   });
-  // 取得 liff context groupId
-  let detectedGroupId = "";
-  try{
-    const ctx = (typeof liff !== "undefined" && liff.getContext) ? liff.getContext() : null;
-    if(ctx && ctx.groupId) detectedGroupId = ctx.groupId;
-  }catch(e){}
-
   html+=`<button class="btn bg" style="margin-top:12px" ${dis} onclick="saveAdmins()">💾 儲存管理者名單</button>
   <div style="margin-top:20px;padding-top:16px;border-top:1px dashed var(--border)">
     <div class="sec" style="margin-top:0">主要群組設定</div>
     <div id="group-id-current" style="font-size:12px;color:var(--sub);margin-bottom:6px">載入中...</div>
-    ${detectedGroupId
-      ? `<div style="font-size:12px;color:var(--g2);margin-bottom:8px">📍 偵測到：${detectedGroupId}</div>
-         <button class="btn bg bsm" ${dis} onclick="saveGroupId('${detectedGroupId}')">✅ 設定此群組為主要群組</button>`
-      : `<div style="font-size:12px;color:var(--muted);margin-bottom:8px">⚠️ 請從群組內開啟 LIFF 才能偵測</div>`
-    }
+    <div id="group-id-detected" style="font-size:12px;color:var(--g2);margin-bottom:8px"></div>
+    <button class="btn bg bsm" id="btn-set-detected" ${dis} style="display:none" onclick="setDetectedGroup()">✅ 設定偵測到的群組為主要群組</button>
     <button class="btn bb bsm" id="push-group-btn" style="margin-top:8px" ${dis} onclick="pushGroupFlex()">📤 傳送報名訊息到群組</button>
   </div>
   <div style="margin-top:20px;padding-top:16px;border-top:1px dashed var(--border)">
@@ -871,10 +861,21 @@ function renderAdmAdmins(){
     </div>
   </div>`;
   el.innerHTML=html;
-  // 載入目前群組 ID
+  // 載入目前群組 ID 和偵測到的群組 ID
   apiFetch("/api/admin/get-group-id").then(r=>{
     const el=document.getElementById("group-id-current");
-    if(el) el.textContent=r.group_id ? `目前主要群組：${r.group_id}` : "尚未設定";
+    if(el) el.textContent=r.group_id ? `目前主要群組：${r.group_id}` : "尚未設定主要群組";
+    const det=document.getElementById("group-id-detected");
+    const btn=document.getElementById("btn-set-detected");
+    if(det && r.detected){
+      det.textContent=`📍 Webhook 偵測到：${r.detected}`;
+      if(btn && r.detected !== r.group_id){
+        btn.style.display="block";
+        btn._detectedId = r.detected;
+      }
+    }else if(det){
+      det.textContent="⚠️ 尚未偵測到群組，請在群組發任意訊息";
+    }
   }).catch(()=>{});
   // 設定下拉選單當前值
   apiFetch("/api/guest-open-rule").then(r=>{
@@ -907,6 +908,13 @@ async function pushGroupFlex(){
     btn.textContent="📤 傳送報名訊息到群組";
     toast("❌ 傳送失敗");
   }
+}
+async function setDetectedGroup(){
+  const btn=document.getElementById("btn-set-detected");
+  const groupId=btn?._detectedId||"";
+  if(!groupId){toast("⚠️ 無偵測到的群組 ID");return}
+  await saveGroupId(groupId);
+  btn.style.display="none";
 }
 async function saveGroupId(groupId){
   if(!isAdmin){toast("⚠️ 非管理者");return}

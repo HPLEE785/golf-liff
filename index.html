@@ -851,6 +851,7 @@ function renderAdmAdmins(){
          <button class="btn bg bsm" ${dis} onclick="saveGroupId('${detectedGroupId}')">✅ 設定此群組為主要群組</button>`
       : `<div style="font-size:12px;color:var(--muted);margin-bottom:8px">⚠️ 請從群組內開啟 LIFF 才能偵測</div>`
     }
+    <button class="btn bb bsm" id="push-group-btn" style="margin-top:8px" ${dis} onclick="pushGroupFlex()">📤 傳送報名訊息到群組</button>
   </div>
   <div style="margin-top:20px;padding-top:16px;border-top:1px dashed var(--border)">
     <div class="sec" style="margin-top:0">來賓報名開放時間</div>
@@ -885,6 +886,28 @@ function renderAdmAdmins(){
 function updateAdmin(i,field,val){if(!adminsData[i])adminsData[i]={display_name:"",line_user_id:""};adminsData[i][field]=val.trim()}
 function clearAdmin(i){if(!isAdmin){toast("⚠️ 非管理者");return}adminsData[i]={display_name:"",line_user_id:""};renderAdmAdmins()}
 
+async function pushGroupFlex(){
+  if(!isAdmin){toast("⚠️ 非管理者");return}
+  const btn=document.getElementById("push-group-btn");
+  if(!btn||btn.disabled)return;
+  btn.disabled=true;
+  btn.textContent="傳送中...";
+  try{
+    const res=await apiFetch("/api/admin/push-group-flex",{method:"POST",body:JSON.stringify({operator:getMyName()})});
+    if(res.status==="ok"){
+      btn.textContent="✅ 已傳送（重開LIFF才能再傳）";
+      toast("✅ 已傳送到群組");
+    }else{
+      btn.disabled=false;
+      btn.textContent="📤 傳送報名訊息到群組";
+      toast("❌ "+(res.message||"傳送失敗"));
+    }
+  }catch(e){
+    btn.disabled=false;
+    btn.textContent="📤 傳送報名訊息到群組";
+    toast("❌ 傳送失敗");
+  }
+}
 async function saveGroupId(groupId){
   if(!isAdmin){toast("⚠️ 非管理者");return}
   if(!confirm(`確定設定此群組為主要群組？\n${groupId}`))return;

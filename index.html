@@ -835,7 +835,23 @@ function renderAdmAdmins(){
       <button class="admin-del" ${dis} onclick="clearAdmin(${i})">×</button>
     </div>`;
   });
+  // 取得 liff context groupId
+  let detectedGroupId = "";
+  try{
+    const ctx = (typeof liff !== "undefined" && liff.getContext) ? liff.getContext() : null;
+    if(ctx && ctx.groupId) detectedGroupId = ctx.groupId;
+  }catch(e){}
+
   html+=`<button class="btn bg" style="margin-top:12px" ${dis} onclick="saveAdmins()">💾 儲存管理者名單</button>
+  <div style="margin-top:20px;padding-top:16px;border-top:1px dashed var(--border)">
+    <div class="sec" style="margin-top:0">主要群組設定</div>
+    <div id="group-id-current" style="font-size:12px;color:var(--sub);margin-bottom:6px">載入中...</div>
+    ${detectedGroupId
+      ? `<div style="font-size:12px;color:var(--g2);margin-bottom:8px">📍 偵測到：${detectedGroupId}</div>
+         <button class="btn bg bsm" ${dis} onclick="saveGroupId('${detectedGroupId}')">✅ 設定此群組為主要群組</button>`
+      : `<div style="font-size:12px;color:var(--muted);margin-bottom:8px">⚠️ 請從群組內開啟 LIFF 才能偵測</div>`
+    }
+  </div>
   <div style="margin-top:20px;padding-top:16px;border-top:1px dashed var(--border)">
     <div class="sec" style="margin-top:0">來賓報名開放時間</div>
     <select class="input" id="guest-rule-sel" style="margin-bottom:10px" ${dis}>
@@ -854,6 +870,11 @@ function renderAdmAdmins(){
     </div>
   </div>`;
   el.innerHTML=html;
+  // 載入目前群組 ID
+  apiFetch("/api/admin/get-group-id").then(r=>{
+    const el=document.getElementById("group-id-current");
+    if(el) el.textContent=r.group_id ? `目前主要群組：${r.group_id}` : "尚未設定";
+  }).catch(()=>{});
   // 設定下拉選單當前值
   apiFetch("/api/guest-open-rule").then(r=>{
     const sel=document.getElementById("guest-rule-sel");
@@ -864,6 +885,15 @@ function renderAdmAdmins(){
 function updateAdmin(i,field,val){if(!adminsData[i])adminsData[i]={display_name:"",line_user_id:""};adminsData[i][field]=val.trim()}
 function clearAdmin(i){if(!isAdmin){toast("⚠️ 非管理者");return}adminsData[i]={display_name:"",line_user_id:""};renderAdmAdmins()}
 
+async function saveGroupId(groupId){
+  if(!isAdmin){toast("⚠️ 非管理者");return}
+  if(!confirm(`確定設定此群組為主要群組？\n${groupId}`))return;
+  try{
+    await apiFetch("/api/admin/save-group-id",{method:"POST",body:JSON.stringify({operator:getMyName(),group_id:groupId})});
+    toast("✅ 群組已設定");
+    document.getElementById("group-id-current").textContent=`目前主要群組：${groupId}`;
+  }catch(e){toast("❌ 設定失敗")}
+}
 async function saveGuestRule(){
   if(!isAdmin){toast("⚠️ 非管理者");return}
   const rule=document.getElementById("guest-rule-sel")?.value||"tue_00";

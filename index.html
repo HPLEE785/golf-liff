@@ -282,8 +282,8 @@ function renderRegister(){
   // 也加入非成員模式的名字（加*）
   if(myName) allMine.push(myName+"*");
   // 本季統計區塊（由 loadMySeasonStats 填入）
-  let html='<div id="season-stat-bar" style="background:#e8f5e9;border-radius:10px;padding:10px 14px;margin-bottom:12px;display:none"></div>';
-  if(!scheduleData.length){el.innerHTML=html+'<div class="empty"><div style="font-size:40px;margin-bottom:10px">🏌️</div>本週尚無開放場次</div>';return}
+  const seasonBar='<div id="season-stat-bar" style="background:#e8f5e9;border-radius:10px;padding:10px 14px;margin-bottom:12px;display:none"></div>';
+  if(!scheduleData.length){el.innerHTML=seasonBar+'<div class="empty"><div style="font-size:40px;margin-bottom:10px">🏌️</div>本週尚無開放場次</div>';return}
   const now=new Date();
   // 來賓開放時間根據 guestRule 動態計算
   function guestOpenTime(rule){
@@ -303,7 +303,7 @@ function renderRegister(){
   const openTime=guestOpenTime(guestRule);
   const guestOk=now>=openTime;
   const guestRuleLabel=ruleLabels[guestRule]||"週二 00:00後";
-  let html='<div class="sec">本週場次</div>';
+  let html=seasonBar+'<div class="sec">本週場次</div>';
   for(const d of scheduleData){
     const roster=rosterData.find(r=>r.play_date===d.play_date);
     const allPlayers=(roster?.players||[]); // 包含候補，讓候補也可顯示和取消

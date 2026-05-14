@@ -209,7 +209,6 @@ function applyFontSize(){
   document.documentElement.style.setProperty("--fs", v+"px");
 }
 applyFontSize();
-S.set("hideSeasonBar", false); // 每次開啟 LIFF 重置隱藏狀態
 const getMyName=()=>S.get("myName")||"";
 const normName=s=>(s||"").replace(/\s+/g,"").toUpperCase();
 const getTeam=()=>S.get("myTeam")||Array(7).fill("");
@@ -477,9 +476,9 @@ async function loadMySeasonStats(myName){
     }
     const bar=document.getElementById("season-stat-bar");
     if(!bar)return;
-    bar.style.display="block";
     const hidden=S.get("hideSeasonBar");
-    if(hidden) return;
+    if(hidden){bar.style.display="none";return;}
+    bar.style.display="block";
     bar.style.padding="5px 14px";
     bar.style.marginBottom="6px";
     bar.innerHTML=`<span style="font-weight:900">本季累計：${count} 次</span>`+
@@ -492,6 +491,20 @@ function hideSeasonBar(){
   S.set("hideSeasonBar", true);
   const bar=document.getElementById("season-stat-bar");
   if(bar) bar.style.display="none";
+  toast("已隱藏，可至「⚙️ 我的」重新開啟");
+}
+function toggleSeasonBar(){
+  const hidden=S.get("hideSeasonBar")||false;
+  S.set("hideSeasonBar", !hidden);
+  if(hidden){
+    // 重新顯示：重新載入報名頁資料
+    const myName=getMyName();
+    if(myName&&scheduleData.length) loadMySeasonStats(myName);
+  }else{
+    const bar=document.getElementById("season-stat-bar");
+    if(bar) bar.style.display="none";
+  }
+  renderSettings();
 }
 function showSeasonDetail(dates){
   if(!dates||!dates.length){toast("本季尚無參加記錄");return}
@@ -604,17 +617,20 @@ function renderRoster(){
 function renderSettings(){
   const myName=getMyName(),team=getTeam(),guests=getGuests();
   const fs=S.get("fontSize")||0;
-  let html=`<div class="sec">字體大小</div>
+  const hideBar=S.get("hideSeasonBar")||false;
+  let html=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+    <span style="font-weight:900;white-space:nowrap">字體大小</span>
+    <button style="padding:4px 10px;border-radius:8px;border:1.5px solid ${fs==0?'var(--g2)':'#ddd'};background:${fs==0?'var(--g2)':'#f0f0f0'};color:${fs==0?'#fff':'#555'};font-size:13px;font-weight:700;cursor:pointer" onclick="setFontSize(0)">小</button>
+    <button style="padding:4px 10px;border-radius:8px;border:1.5px solid ${fs==4?'var(--g2)':'#ddd'};background:${fs==4?'var(--g2)':'#f0f0f0'};color:${fs==4?'#fff':'#555'};font-size:13px;font-weight:700;cursor:pointer" onclick="setFontSize(4)">中</button>
+    <button style="padding:4px 10px;border-radius:8px;border:1.5px solid ${fs==8?'var(--g2)':'#ddd'};background:${fs==8?'var(--g2)':'#f0f0f0'};color:${fs==8?'#fff':'#555'};font-size:13px;font-weight:700;cursor:pointer" onclick="setFontSize(8)">大</button>
+  </div>
+  <div style="margin-bottom:10px">
+    <button class="btn bsm" style="background:${hideBar?'var(--g2)':'#aaa'};color:#fff" onclick="toggleSeasonBar()">
+      ${hideBar?'開啟季累計顯示':'隱藏季累計顯示'}
+    </button>
+  </div>
   <div class="card"><div class="card-body">
-    <div style="display:flex;gap:8px">
-      <button class="btn bsm" style="flex:1;${fs==0?'background:var(--g2);color:#fff':'background:#f0f0f0;color:#555;border:1.5px solid #ddd'}" onclick="setFontSize(0)">最小</button>
-      <button class="btn bsm" style="flex:1;${fs==4?'background:var(--g2);color:#fff':'background:#f0f0f0;color:#555;border:1.5px solid #ddd'}" onclick="setFontSize(4)">適中</button>
-      <button class="btn bsm" style="flex:1;${fs==8?'background:var(--g2);color:#fff':'background:#f0f0f0;color:#555;border:1.5px solid #ddd'}" onclick="setFontSize(8)">最大</button>
-    </div>
-  </div></div>
-  <div class="sec">我自己</div>
-  <div class="card"><div class="card-body">
-    <div id="myname-label" style="font-size:12px;font-weight:700;color:${myName?'var(--sub)':'var(--r1)'};margin-bottom:5px">
+    <div id="myname-label" style="font-size:calc(15px + var(--fs));font-weight:700;color:${myName?'var(--sub)':'var(--r1)'};margin-bottom:5px">
       我的名字（必填，用於報名）${myName?'':'　⬅ 請先填寫'}
     </div>
     <input class="input" id="s-myname" value="${myName}" placeholder="輸入你的正式姓名"
@@ -1149,21 +1165,21 @@ function renderAdmMembers(){
     <button class="tee-btn edit" onclick="showMemberRangePicker()">📅 設定區間</button>
   </div>
   <div style="font-size:11px;color:var(--muted);margin-bottom:6px">共 ${membersData.length} 位成員　區間：${memberRangeLabel}</div>
-  <div style="display:grid;grid-template-columns:28px 1fr 60px 28px;gap:6px;margin-bottom:6px;font-size:11px;font-weight:900;color:var(--muted);padding:0 4px">
+  <div style="display:grid;grid-template-columns:28px 1fr 44px 28px;gap:4px;margin-bottom:6px;font-size:11px;font-weight:900;color:var(--muted);padding:0 4px">
     <div></div><div>姓名</div><div style="text-align:center">次數</div><div></div>
   </div>`;
   membersData.forEach((m,i)=>{
-    html+=`<div class="srow" style="display:grid;grid-template-columns:28px 1fr 60px 28px;gap:6px;align-items:center">
+    html+=`<div class="srow" style="display:grid;grid-template-columns:28px 1fr 44px 28px;gap:4px;align-items:center">
       <div class="snum">${i+1}</div>
       <input class="sinput" value="${m.display_name}" ${dis}
         onchange="updateMemberName('${m.id}','${m.display_name}',this.value)">
-      <div class="member-count" data-name="${m.display_name}" style="text-align:center;font-weight:900;color:var(--g2)">…</div>
+      <div class="member-count" data-name="${m.display_name}" style="text-align:center;font-weight:900;color:var(--g2);font-size:calc(13px + var(--fs));flex-shrink:0">…</div>
       <button class="sclear" ${dis} onclick="deleteMember('${m.id}','${m.display_name}')">×</button>
     </div>`;
   });
   el.innerHTML=html;
   // DOM 就緒後載入區間次數（setTimeout 確保 DOM 完全渲染）
-  setTimeout(()=>{
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
   apiFetch(`/api/stats-range?start=${memberRange.start}&end=${memberRange.end}`).then(r=>{
     const countMap={};
     (r.players||[]).forEach(p=>countMap[p.name]=p.count);
@@ -1174,7 +1190,7 @@ function renderAdmMembers(){
   }).catch(()=>{
     document.querySelectorAll(".member-count").forEach(c=>c.textContent="-");
   });
-  },100); // 100ms 確保 DOM 就緒
+  })); // double rAF 確保 DOM 就緒
 }
 
 function showMemberRangePicker(){

@@ -174,17 +174,19 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
   <button class="tab" data-tab="roster" onclick="switchTab(this)">👥 名單</button>
   <button class="tab" data-tab="settings" onclick="switchTab(this)">⚙️ 我的</button>
   <button class="tab" data-tab="admin" onclick="switchTab(this)">🔧 管理</button>
+  <button class="tab" data-tab="stats" onclick="switchTab(this)">📊 軌跡</button>
 </div>
 <div class="page active" id="page-register"><div id="reg-content"><div class="loading"><div class="spinner"></div>載入中...</div></div></div>
 <div class="page" id="page-roster"><div id="roster-content"><div class="loading"><div class="spinner"></div>載入中...</div></div></div>
 <div class="page" id="page-settings"><div id="settings-content"></div></div>
+<div class="page" id="page-stats"><div id="stats-content"><div class="loading"><div class="spinner"></div>載入中...</div></div></div>
 <div class="page" id="page-admin">
   <div id="admin-lock-banner" class="lock-banner" style="display:none">🔒 非管理者，功能已鎖定。輸入緊急密碼可解鎖。</div>
   <div class="adm-tabs" style="flex-wrap:wrap">
-    <button class="adm-tab active" data-adm="tee" onclick="switchAdmTab(this)">⛳ 球敘</button>
-    <button class="adm-tab" data-adm="admins" onclick="switchAdmTab(this)">👑 管理者</button>
-    <button class="adm-tab" data-adm="members" onclick="switchAdmTab(this)">👤 成員</button>
-    <button class="adm-tab" data-adm="logs" onclick="switchAdmTab(this)">📋 LOGS</button>
+    <button class="adm-tab active" data-adm="tee" onclick="switchAdmTab(this)">⛳ 局</button>
+    <button class="adm-tab" data-adm="admins" onclick="switchAdmTab(this)">👑 掌</button>
+    <button class="adm-tab" data-adm="members" onclick="switchAdmTab(this)">👤 員</button>
+    <button class="adm-tab" data-adm="logs" onclick="switchAdmTab(this)">📋 誌</button>
   </div>
   <div class="adm-page active" id="adm-tee"><div class="loading"><div class="spinner"></div></div></div>
   <div class="adm-page" id="adm-admins"><div class="loading"><div class="spinner"></div></div></div>
@@ -235,6 +237,7 @@ function switchTab(el){
   else if(tab==="roster")loadRoster();
   else if(tab==="settings")renderSettings();
   else if(tab==="admin")loadAdmin();
+  else if(tab==="stats")loadStats();
 }
 function switchAdmTab(el){
   document.querySelectorAll(".adm-tab").forEach(t=>t.classList.remove("active"));
@@ -271,12 +274,16 @@ async function loadRegister(){
 function renderRegister(){
   const el=document.getElementById("reg-content");
   const myName=getMyName();
+  // 本季統計（非同步載入，不阻塞頁面）
+  if(myName) loadMySeasonStats(myName);
   const team=getTeam().filter(Boolean);
   const guests=getGuests().filter(Boolean);
   const allMine=[myName,...team,...guests].filter(Boolean);
   // 也加入非成員模式的名字（加*）
   if(myName) allMine.push(myName+"*");
-  if(!scheduleData.length){el.innerHTML='<div class="empty"><div style="font-size:40px;margin-bottom:10px">🏌️</div>本週尚無開放場次</div>';return}
+  // 本季統計區塊（由 loadMySeasonStats 填入）
+  let html='<div id="season-stat-bar" style="background:#e8f5e9;border-radius:10px;padding:10px 14px;margin-bottom:12px;display:none"></div>';
+  if(!scheduleData.length){el.innerHTML=html+'<div class="empty"><div style="font-size:40px;margin-bottom:10px">🏌️</div>本週尚無開放場次</div>';return}
   const now=new Date();
   // 來賓開放時間根據 guestRule 動態計算
   function guestOpenTime(rule){
@@ -452,6 +459,55 @@ async function reloadData(){
   scheduleData=s.dates||[];rosterData=r.dates||[];
 }
 
+// ══ 本季統計 ══
+async function loadMySeasonStats(myName){
+  const {start,end}=currentQuarterRange();
+  try{
+    const r=await apiFetch(`/api/stats-range?start=${start}&end=${end}`);
+    const me=r.players.find(p=>p.name===myName);
+    // 也從 rosterData 補充本季未過期場次
+    const now=new Date();
+    let count=me?me.count:0;
+    let details=me?Object.keys(me.dates):[];
+    // 加入 rosterData 裡符合本季且尚未在 details 的場次
+    for(const d of (rosterData||[])){
+      const pd=d.play_date;
+      if(pd>=start&&pd<=end){
+        const inReg=d.players&&d.players.some(p=>p.name===myName);
+        if(inReg&&!details.includes(pd)){details.push(pd);count++;}
+      }
+    }
+    const bar=document.getElementById("season-stat-bar");
+    if(!bar)return;
+    bar.style.display="block";
+    bar.innerHTML=`<span style="font-weight:900">本季累計參加：${count} 次</span>&nbsp;&nbsp;<button class="reg-btn" onclick="showSeasonDetail(${JSON.stringify(details)})">清單</button>`;
+  }catch(e){}
+}
+function showSeasonDetail(dates){
+  if(!dates||!dates.length){toast("本季尚無參加記錄");return}
+  const sorted=[...dates].sort();
+  const html=sorted.map((d,i)=>`<div style="padding:6px 0;border-bottom:1px solid #f0f0f0">${i+1}. ${mmdd(d)} 星期${wdn(d)}</div>`).join("");
+  openModal(`<div class="modal-title">本季參加場次</div><div class="modal-sub">共 ${sorted.length} 場</div><div>${html}</div>`);
+}
+
+// ══ 季統計工具函式 ══
+function getQuarter(d){
+  const m=new Date(d).getMonth()+1;
+  return m<=3?1:m<=6?2:m<=9?3:4;
+}
+function getQuarterRange(year,q){
+  const starts=["01-01","04-01","07-01","10-01"];
+  const ends=["03-31","06-30","09-30","12-31"];
+  return {start:`${year}-${starts[q-1]}`,end:`${year}-${ends[q-1]}`};
+}
+function currentQuarterRange(){
+  const now=new Date();
+  const y=now.getFullYear();
+  const q=getQuarter(now);
+  return getQuarterRange(y,q);
+}
+function quarterLabel(year,q){return `${year}年第${q}季`}
+
 // ══ 名單頁 ══
 async function loadRoster(){
   const el=document.getElementById("roster-content");
@@ -578,6 +634,100 @@ function saveTeam(i,v){const t=getTeam();t[i]=v.trim();S.set("myTeam",t);toast("
 function clearTeam(i){const t=getTeam();t[i]="";S.set("myTeam",t);renderSettings()}
 function saveGuest(i,v){const g=getGuests();g[i]=v.trim();S.set("myGuests",g);toast("✅ 已儲存");renderSettings()}
 function clearGuest(i){const g=getGuests();g[i]="";S.set("myGuests",g);renderSettings()}
+
+// ══ 統計頁 ══
+async function loadStats(){
+  const el=document.getElementById("stats-content");
+  el.innerHTML='<div class="loading"><div class="spinner"></div>載入中...</div>';
+  // 產生月份選項（從2025-01到今天+3個月）
+  const now=new Date();
+  const months=[];
+  let y=2025,m=1;
+  while(y<now.getFullYear()||(y===now.getFullYear()&&m<=now.getMonth()+4)){
+    months.push(`${y}-${String(m).padStart(2,'0')}`);
+    m++;if(m>12){m=1;y++;}
+  }
+  const opts=months.map(mo=>`<option value="${mo}">${mo}</option>`).join("");
+  // 預設本季
+  const {start,end}=currentQuarterRange();
+  const defStart=start.slice(0,7);
+  const defEnd=end.slice(0,7);
+  el.innerHTML=`
+    <div class="sec">統計區間</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+      <select class="input" id="stats-start" style="flex:1">
+        ${months.map(mo=>`<option value="${mo}" ${mo===defStart?'selected':''}>${mo}</option>`).join("")}
+      </select>
+      <span>～</span>
+      <select class="input" id="stats-end" style="flex:1">
+        ${months.map(mo=>`<option value="${mo}" ${mo===defEnd?'selected':''}>${mo}</option>`).join("")}
+      </select>
+    </div>
+    <button class="btn bg bsm" onclick="queryStats()">🔍 查詢</button>
+    <div id="stats-result" style="margin-top:14px"></div>`;
+}
+
+async function queryStats(){
+  const startMo=document.getElementById("stats-start")?.value||"";
+  const endMo=document.getElementById("stats-end")?.value||"";
+  if(!startMo||!endMo){toast("⚠️ 請選擇區間");return}
+  const start=startMo+"-01";
+  // 結束月的最後一天
+  const endDate=new Date(endMo.split("-")[0], parseInt(endMo.split("-")[1]), 0);
+  const end=endMo+"-"+String(endDate.getDate()).padStart(2,"0");
+  const el=document.getElementById("stats-result");
+  el.innerHTML='<div class="loading"><div class="spinner"></div></div>';
+  try{
+    const r=await apiFetch(`/api/stats-range?start=${start}&end=${end}`);
+    renderStats(r, start, end);
+  }catch(e){el.innerHTML='<div class="empty">⚠️ 查詢失敗</div>'}
+}
+
+function renderStats(r, start, end){
+  const el=document.getElementById("stats-result");
+  const dates=r.dates||[];
+  const players=r.players||[];
+  if(!players.length){el.innerHTML='<div class="empty">此區間無資料</div>';return}
+  let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <div class="sec" style="margin:0">${start} ～ ${end}　共 ${dates.length} 場</div>
+    <button class="tee-btn edit" onclick="copyStats(${JSON.stringify(r)})">📋 複製</button>
+  </div>`;
+  html+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:calc(12px + var(--fs))">';
+  html+='<tr style="background:var(--g2);color:#fff"><th style="padding:6px 10px;text-align:left">名字</th><th style="padding:6px 10px;text-align:center">次數</th></tr>';
+  players.forEach((p,i)=>{
+    const bg=i%2===0?'#fff':'#f9f9f9';
+    const guest=p.is_guest?'<span style="font-size:10px;color:var(--muted)">(來賓)</span>':'';
+    html+=`<tr style="background:${bg}">
+      <td style="padding:6px 10px">${p.name} ${guest}</td>
+      <td style="padding:6px 10px;text-align:center;font-weight:900;color:var(--g2)">${p.count}</td>
+    </tr>`;
+  });
+  html+='</table></div>';
+  el.innerHTML=html;
+}
+
+function copyStats(r){
+  const dates=r.dates||[];
+  const players=r.players||[];
+  const header="名字	次數	"+dates.map(d=>mmdd(d)+" "+wdn(d)).join("	");
+  const rows=players.map(p=>{
+    const guest=p.is_guest?"(來賓)":"";
+    const attended=dates.map(d=>p.dates[d]?"✓":"").join("	");
+    return `${p.name}${guest}	${p.count}	${attended}`;
+  });
+  const text=header+"
+"+rows.join("
+");
+  navigator.clipboard.writeText(text)
+    .then(()=>toast("✅ 已複製，可貼到 Excel"))
+    .catch(()=>{
+      const ta=document.createElement("textarea");
+      ta.value=text;document.body.appendChild(ta);
+      ta.select();document.execCommand("copy");
+      document.body.removeChild(ta);
+      toast("✅ 已複製");
+    });
+}
 
 // ══ 管理頁 ══
 async function loadAdmin(){
@@ -808,12 +958,24 @@ async function submitEditTee(playDate){
 }
 
 async function deleteTee(playDate){
+  // STEP 1
   if(!confirm(`確定刪除 ${mmdd(playDate)} 星期${wdn(playDate)} 的球敘？`))return;
+  // STEP 2
+  const writeIn = confirm(`要把此次球敘名單寫入季統計嗎？\n\n[確定] = 寫入後刪除\n[取消] = 不寫入`);
+  if(!writeIn){
+    // 再次確認不寫入
+    const sure = confirm(`不寫入季統計會導致此次球敘名單\n完全遺失，確定嗎？\n\n[確定] = 直接刪除\n[取消] = 回上一步`);
+    if(!sure){ deleteTee(playDate); return; } // 回 STEP 2
+  }
   try{
+    if(writeIn){
+      const wr=await apiFetch("/api/admin/write-seasonal",{method:"POST",body:JSON.stringify({operator:getMyName(),play_date:playDate})});
+      toast(`✅ 已寫入 ${wr.written} 筆季統計`);
+    }
     await apiFetch("/api/admin/delete-tee",{method:"POST",body:JSON.stringify({operator:getMyName(),play_date:playDate})});
     toast("✅ 已刪除");
     const tee=await apiFetch("/api/admin/tee-times");teeTimes=tee.tee_times||[];renderAdmTee();scheduleData=[];
-  }catch(e){toast("❌ 刪除失敗")}
+  }catch(e){toast("❌ 刪除失敗："+e.message)}
 }
 
 // ══ 管理者設定 ══
@@ -967,25 +1129,62 @@ function renderAdmMembers(){
   const el=document.getElementById("adm-members");
   const dis=!isAdmin?"disabled":"";
   const names=membersData.map(m=>m.display_name).join("\n");
+  // 讀取區間設定
+  const memberRange=S.get("memberRange")||currentQuarterRange();
+  const memberRangeLabel=S.get("memberRangeLabel")||"本季";
   let html=`
   <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
     <button class="tee-btn edit" ${dis} onclick="addMemberPrompt()">＋ 新增成員</button>
     <button class="tee-btn edit" onclick="copyAllMembers()">📋 全部複製</button>
     <button class="tee-btn edit" ${dis} onclick="pasteMembers()">📥 從剪貼簿貼上</button>
     <button class="tee-btn del" ${dis} onclick="clearAllMembers()">🗑️ 全部清空</button>
+    <button class="tee-btn edit" onclick="showMemberRangePicker()">📅 設定區間</button>
   </div>
-  <div style="font-size:11px;color:var(--muted);margin-bottom:10px">共 ${membersData.length} 位成員</div>`;
+  <div style="font-size:11px;color:var(--muted);margin-bottom:6px">共 ${membersData.length} 位成員　區間：${memberRangeLabel}</div>
+  <div style="display:grid;grid-template-columns:28px 1fr 60px 28px;gap:6px;margin-bottom:6px;font-size:11px;font-weight:900;color:var(--muted);padding:0 4px">
+    <div></div><div>姓名</div><div style="text-align:center">次數</div><div></div>
+  </div>`;
+  // 非同步載入區間次數
+  const rangeCountMap={};
+  apiFetch(`/api/stats-range?start=${memberRange.start}&end=${memberRange.end}`).then(r=>{
+    (r.players||[]).forEach(p=>rangeCountMap[p.name]=p.count);
+    // 更新所有次數顯示
+    document.querySelectorAll(".member-count").forEach(el=>{
+      el.textContent=rangeCountMap[el.dataset.name]||0;
+    });
+  }).catch(()=>{});
+
   membersData.forEach((m,i)=>{
-    html+=`<div class="srow">
+    html+=`<div class="srow" style="display:grid;grid-template-columns:28px 1fr 60px 28px;gap:6px;align-items:center">
       <div class="snum">${i+1}</div>
       <input class="sinput" value="${m.display_name}" ${dis}
         onchange="updateMemberName('${m.id}','${m.display_name}',this.value)">
+      <div class="member-count" data-name="${m.display_name}" style="text-align:center;font-weight:900;color:var(--g2)">…</div>
       <button class="sclear" ${dis} onclick="deleteMember('${m.id}','${m.display_name}')">×</button>
     </div>`;
   });
   el.innerHTML=html;
 }
 
+function showMemberRangePicker(){
+  // 產生最近5季的選項
+  const now=new Date();
+  const options=[];
+  let y=now.getFullYear(),q=getQuarter(now);
+  for(let i=0;i<5;i++){
+    const r=getQuarterRange(y,q);
+    options.push({label:quarterLabel(y,q),value:JSON.stringify(r)});
+    q--;if(q<1){q=4;y--;}
+  }
+  const optHtml=options.map((o,i)=>`<button class="btn bsm" style="margin-bottom:6px;${i===0?'background:var(--g2);color:#fff':''}" onclick="setMemberRange(${o.value.replace(/"/g,"'")}, '${o.label}')">${o.label}</button>`).join("");
+  openModal(`<div class="modal-title">選擇統計區間</div><div class="modal-sub">成員頁顯示的參加次數區間</div>${optHtml}`);
+}
+function setMemberRange(range, label){
+  S.set("memberRange", range);
+  S.set("memberRangeLabel", label);
+  closeModal();
+  loadAdmMembers();
+}
 function copyAllMembers(){
   const names=membersData.map(m=>m.display_name).join("\n");
   navigator.clipboard.writeText(names).then(()=>toast("✅ 已複製 "+membersData.length+" 位成員"))

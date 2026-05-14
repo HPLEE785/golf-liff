@@ -209,6 +209,7 @@ function applyFontSize(){
   document.documentElement.style.setProperty("--fs", v+"px");
 }
 applyFontSize();
+S.set("hideSeasonBar", false); // 每次開啟 LIFF 重置隱藏狀態
 const getMyName=()=>S.get("myName")||"";
 const normName=s=>(s||"").replace(/\s+/g,"").toUpperCase();
 const getTeam=()=>S.get("myTeam")||Array(7).fill("");
@@ -477,8 +478,20 @@ async function loadMySeasonStats(myName){
     const bar=document.getElementById("season-stat-bar");
     if(!bar)return;
     bar.style.display="block";
-    bar.innerHTML=`<span style="font-weight:900">本季累計參加：${count} 次</span>&nbsp;&nbsp;<button class="reg-btn" onclick="showSeasonDetail(${JSON.stringify(details)})">清單</button>`;
+    const hidden=S.get("hideSeasonBar");
+    if(hidden) return;
+    bar.style.padding="5px 14px";
+    bar.style.marginBottom="6px";
+    bar.innerHTML=`<span style="font-weight:900">本季累計：${count} 次</span>`+
+      `&nbsp;<button class="reg-btn" id="season-list-btn">清單</button>`+
+      `&nbsp;<button class="reg-btn" style="background:#aaa" onclick="hideSeasonBar()">隱藏</button>`;
+    document.getElementById("season-list-btn")?.addEventListener("click",()=>showSeasonDetail(details));
   }catch(e){}
+}
+function hideSeasonBar(){
+  S.set("hideSeasonBar", true);
+  const bar=document.getElementById("season-stat-bar");
+  if(bar) bar.style.display="none";
 }
 function showSeasonDetail(dates){
   if(!dates||!dates.length){toast("本季尚無參加記錄");return}
@@ -1151,13 +1164,11 @@ function renderAdmMembers(){
   el.innerHTML=html;
   // DOM 就緒後載入區間次數
   apiFetch(`/api/stats-range?start=${memberRange.start}&end=${memberRange.end}`).then(r=>{
-    (r.players||[]).forEach(p=>{
-      document.querySelectorAll(`.member-count[data-name="${p.name}"]`).forEach(c=>{
-        c.textContent=p.count;
-      });
-    });
+    const countMap={};
+    (r.players||[]).forEach(p=>countMap[p.name]=p.count);
     document.querySelectorAll(".member-count").forEach(c=>{
-      if(c.textContent==="…") c.textContent="0";
+      const name=c.dataset.name;
+      c.textContent=countMap[name]!==undefined?countMap[name]:0;
     });
   }).catch(()=>{
     document.querySelectorAll(".member-count").forEach(c=>c.textContent="-");

@@ -1169,12 +1169,12 @@ function renderAdmMembers(){
     <div></div><div>姓名</div><div style="text-align:center">次數</div><div></div>
   </div>`;
   membersData.forEach((m,i)=>{
-    html+=`<div class="srow" style="display:grid;grid-template-columns:28px 1fr 44px 28px;gap:4px;align-items:center">
-      <div class="snum">${i+1}</div>
-      <input class="sinput" value="${m.display_name}" ${dis}
+    html+=`<div style="display:flex;align-items:center;margin-bottom:6px;gap:4px">
+      <div class="snum" style="flex-shrink:0">${i+1}</div>
+      <input class="sinput" style="background:#e3f2fd;flex:1;min-width:0" value="${m.display_name}" ${dis}
         onchange="updateMemberName('${m.id}','${m.display_name}',this.value)">
-      <div class="member-count" data-name="${m.display_name}" style="text-align:center;font-weight:900;color:var(--g2);font-size:calc(13px + var(--fs));flex-shrink:0">…</div>
-      <button class="sclear" ${dis} onclick="deleteMember('${m.id}','${m.display_name}')">×</button>
+      <div class="member-count" data-name="${m.display_name}" style="background:#d8f3dc;min-width:44px;text-align:center;font-weight:900;color:var(--g2);padding:12px 4px;border-radius:8px;flex-shrink:0">…</div>
+      <button class="sclear" style="flex-shrink:0" ${dis} onclick="deleteMember('${m.id}','${m.display_name}')">×</button>
     </div>`;
   });
   el.innerHTML=html;

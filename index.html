@@ -488,10 +488,10 @@ async function loadMySeasonStats(myName){
   }catch(e){}
 }
 function hideSeasonBar(){
+  if(!confirm("隱藏本季累計顯示？\n\n要重新開啟需至「⚙️ 我的」按[開啟季累計顯示]"))return;
   S.set("hideSeasonBar", true);
   const bar=document.getElementById("season-stat-bar");
   if(bar) bar.style.display="none";
-  toast("已隱藏，可至「⚙️ 我的」重新開啟");
 }
 function toggleSeasonBar(){
   const hidden=S.get("hideSeasonBar")||false;

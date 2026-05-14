@@ -1162,7 +1162,8 @@ function renderAdmMembers(){
     </div>`;
   });
   el.innerHTML=html;
-  // DOM 就緒後載入區間次數
+  // DOM 就緒後載入區間次數（setTimeout 確保 DOM 完全渲染）
+  setTimeout(()=>{
   apiFetch(`/api/stats-range?start=${memberRange.start}&end=${memberRange.end}`).then(r=>{
     const countMap={};
     (r.players||[]).forEach(p=>countMap[p.name]=p.count);
@@ -1173,6 +1174,7 @@ function renderAdmMembers(){
   }).catch(()=>{
     document.querySelectorAll(".member-count").forEach(c=>c.textContent="-");
   });
+  },100); // 100ms 確保 DOM 就緒
 }
 
 function showMemberRangePicker(){

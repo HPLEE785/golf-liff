@@ -1050,11 +1050,15 @@ function renderAdmAdmins(){
   // 載入目前群組 ID 和偵測到的群組 ID
   apiFetch("/api/admin/get-group-id").then(r=>{
     const el=document.getElementById("group-id-current");
-    if(el) el.textContent=r.group_id ? `目前主要群組：${r.group_id}` : "尚未設定主要群組";
+    if(el){
+      const name=r.current_name?`「${r.current_name}」`:"";
+      el.textContent=r.group_id ? `目前主要群組：${name} ${r.group_id}` : "尚未設定主要群組";
+    }
     const det=document.getElementById("group-id-detected");
     const btn=document.getElementById("btn-set-detected");
     if(det && r.detected){
-      det.textContent=`📍 Webhook 偵測到：${r.detected}`;
+      const dname=r.detected_name?`「${r.detected_name}」`:"";
+      det.textContent=`📍 Webhook 偵測到：${dname} ${r.detected}`;
       if(btn && r.detected !== r.group_id){
         btn.style.display="block";
         btn._detectedId = r.detected;
@@ -1317,7 +1321,11 @@ function renderAdmLogs(){
     ${days.map(d=>`<button class="filter-btn ${d===logDays?'active':''}" onclick="setLogDays(${d})">${d}天</button>`).join("")}
     <button class="filter-btn ${logDays===999?'active':''}" onclick="setLogDays(999)">全部(30)</button>
   </div>
-  <input class="search-input" placeholder="🔍 關鍵字篩選..." value="${logSearch}" oninput="setLogSearch(this.value)">
+  <div style="display:flex;gap:6px;margin-top:6px">
+    <input class="search-input" id="log-search-input" placeholder="🔍 輸入關鍵字..." value="${logSearch}">
+    <button class="tee-btn edit" onclick="setLogSearch(document.getElementById('log-search-input').value)">篩選</button>
+    <button class="tee-btn" style="background:#f0f0f0;color:#555" onclick="document.getElementById('log-search-input').value='';setLogSearch('')">清除</button>
+  </div>
   <div style="margin-top:10px">`;
   const filtered=allLogs.filter(l=>{
     if(!logSearch)return true;

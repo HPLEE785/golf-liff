@@ -184,11 +184,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
   <div id="admin-lock-banner" class="lock-banner" style="display:none">🔒 非管理者，功能已鎖定。輸入緊急密碼可解鎖。</div>
   <div class="adm-tabs" style="flex-wrap:wrap">
     <button class="adm-tab active" data-adm="tee" onclick="switchAdmTab(this)">⛳ 局</button>
+    <button class="adm-tab" data-adm="push" onclick="switchAdmTab(this)">📤 發</button>
     <button class="adm-tab" data-adm="admins" onclick="switchAdmTab(this)">👑 掌</button>
     <button class="adm-tab" data-adm="members" onclick="switchAdmTab(this)">👤 員</button>
     <button class="adm-tab" data-adm="logs" onclick="switchAdmTab(this)">📋 誌</button>
   </div>
   <div class="adm-page active" id="adm-tee"><div class="loading"><div class="spinner"></div></div></div>
+  <div class="adm-page" id="adm-push"><div class="loading"><div class="spinner"></div></div></div>
   <div class="adm-page" id="adm-admins"><div class="loading"><div class="spinner"></div></div></div>
   <div class="adm-page" id="adm-members"><div class="loading"><div class="spinner"></div></div></div>
   <div class="adm-page" id="adm-logs"><div class="loading"><div class="spinner"></div></div></div>
@@ -246,6 +248,7 @@ function switchAdmTab(el){
   const adm=el.dataset.adm;
   document.getElementById("adm-"+adm).classList.add("active");
   if(adm==="tee")renderAdmTee();
+  else if(adm==="push")loadAdmPush();
   else if(adm==="admins")renderAdmAdmins();
   else if(adm==="members")loadAdmMembers();
   else if(adm==="logs")loadAdmLogs();
@@ -751,6 +754,93 @@ function copyStats(r){
       document.body.removeChild(ta);
       toast("✅ 已複製");
     });
+}
+
+// ══ 發送設定頁 ══
+async function loadAdmPush(){
+  const el=document.getElementById("adm-push");
+  el.innerHTML='<div class="loading"><div class="spinner"></div></div>';
+  try{
+    const r=await apiFetch("/api/admin/get-push-settings");
+    renderAdmPush(r);
+  }catch(e){el.innerHTML='<div class="empty">⚠️ 載入失敗</div>'}
+}
+
+function renderAdmPush(s){
+  const el=document.getElementById("adm-push");
+  const dis=!isAdmin?"disabled":"";
+  const over=s.push_count>=196;
+  const countColor=over?"color:#e74c3c;animation:blink 1s step-start infinite":"color:var(--g2)";
+  let html=`
+  <div style="background:#f0fff4;border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+    <span style="font-weight:900">本月累計自動發送：</span>
+    <span style="font-weight:900;${countColor}">${s.push_count} 則</span>
+    <span style="font-size:11px;color:var(--muted)">（每月最多200則）</span>
+  </div>
+  ${over?'<div style="background:#fdecea;color:#c0392b;padding:8px 12px;border-radius:8px;margin-bottom:10px;font-weight:700">⚠️ 已超過196則，本月自動發送已停止</div>':''}
+
+  <div class="sec">發送時間（多選）</div>
+  <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+    ${["14:00","18:00"].map(t=>`
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+      <input type="checkbox" id="pt-${t.replace(':','-')}" ${s.times.includes(t)?'checked':''} ${dis}
+        style="width:18px;height:18px">
+      <span style="font-weight:700">${t}</span>
+    </label>`).join("")}
+  </div>
+
+  <div class="sec">發送條件（單選）</div>
+  <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+    ${[1,2,3].map(d=>`
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+      <input type="radio" name="push-days" value="${d}" ${s.days===d?'checked':''} ${dis}
+        style="width:18px;height:18px">
+      <span style="font-weight:700">球敘前${d===1?'一':d===2?'二':'三'}天</span>
+    </label>`).join("")}
+  </div>
+
+  <div class="sec">其他觸發</div>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+      <input type="checkbox" id="push-full" ${s.push_on_full?'checked':''} ${dis}
+        style="width:18px;height:18px">
+      <span style="font-weight:700">當某場滿人，自動送出球敘名單</span>
+    </label>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+      <input type="checkbox" id="push-cancel" ${s.push_on_cancel?'checked':''} ${dis}
+        style="width:18px;height:18px">
+      <span style="font-weight:700">偵測到有人取消，自動送出球敘名單</span>
+    </label>
+  </div>
+
+  <button class="btn bg bsm" ${dis} onclick="savePushSettings()">💾 儲存發送設定</button>
+
+  <div style="margin-top:20px;padding:12px 14px;background:#fff3e0;border-radius:10px;font-size:11px;color:#666;line-height:1.8">
+    <div style="font-weight:900;color:#e65100;margin-bottom:6px">📌 定時發送設定說明</div>
+    定時發送需透過 <b>cron-job.org</b> 設定排程：<br>
+    1. 前往 <b>https://cron-job.org</b> 註冊免費帳號<br>
+    2. 新增 Cronjob，URL 填入：<br>
+    <span style="font-family:monospace;background:#f0f0f0;padding:2px 6px;border-radius:4px">https://golf-linebot-4wqe.onrender.com/api/auto-push</span><br>
+    3. 設定執行時間（台灣時間 14:00 = UTC 06:00）<br>
+    4. Method 選 POST
+  </div>`;
+  el.innerHTML=html;
+}
+
+async function savePushSettings(){
+  if(!isAdmin){toast("⚠️ 非管理者");return}
+  const times=["14:00","18:00"].filter(t=>document.getElementById(`pt-${t.replace(':','-')}`)?.checked);
+  const daysEl=document.querySelector('input[name="push-days"]:checked');
+  const days=daysEl?parseInt(daysEl.value):1;
+  const push_on_full=document.getElementById("push-full")?.checked||false;
+  const push_on_cancel=document.getElementById("push-cancel")?.checked||false;
+  if(!times.length){toast("⚠️ 請至少選擇一個發送時間");return}
+  try{
+    await apiFetch("/api/admin/save-push-settings",{method:"POST",body:JSON.stringify({
+      operator:getMyName(),times,days,push_on_full,push_on_cancel
+    })});
+    toast("✅ 發送設定已儲存");
+  }catch(e){toast("❌ 儲存失敗")}
 }
 
 // ══ 管理頁 ══

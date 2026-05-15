@@ -1169,8 +1169,14 @@ async function pushGroupFlex(){
   try{
     const res=await apiFetch("/api/admin/push-group-flex",{method:"POST",body:JSON.stringify({operator:getMyName()})});
     if(res.status==="ok"){
-      btn.textContent="✅ 已傳送（重開LIFF才能再傳）";
       toast("✅ 已傳送到群組");
+      // 重新載入發頁更新次數（按鈕保持 disable）
+      apiFetch("/api/admin/get-push-settings").then(s=>{
+        renderAdmPush(s);
+        // 重新找按鈕並設為 disable
+        const b=document.getElementById("push-group-btn");
+        if(b){b.disabled=true;b.textContent="✅ 已傳送（重開LIFF才能再傳）";}
+      }).catch(()=>{});
     }else{
       btn.disabled=false;
       btn.textContent="📤 傳送報名訊息到群組";

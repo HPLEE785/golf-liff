@@ -763,6 +763,21 @@ async function loadAdmPush(){
   try{
     const r=await apiFetch("/api/admin/get-push-settings");
     renderAdmPush(r);
+    // 載入群組 ID
+    apiFetch("/api/admin/get-group-id").then(g=>{
+      const el=document.getElementById("group-id-current");
+      if(el){
+        const name=g.current_name?`「${g.current_name}」`:"";
+        el.textContent=g.group_id?`目前主要群組：${name} ${g.group_id}`:"尚未設定主要群組";
+      }
+      const det=document.getElementById("group-id-detected");
+      const btn=document.getElementById("btn-set-detected");
+      if(det && g.detected){
+        const dname=g.detected_name?`「${g.detected_name}」`:"";
+        det.textContent=`📍 Webhook 偵測到：${dname} ${g.detected}`;
+        if(btn && g.detected !== g.group_id){btn.style.display="block";btn._detectedId=g.detected;}
+      }else if(det){det.textContent="⚠️ 尚未偵測到群組，請在群組輸入 @0";}
+    }).catch(()=>{});
   }catch(e){el.innerHTML='<div class="empty">⚠️ 載入失敗</div>'}
 }
 
@@ -815,14 +830,19 @@ function renderAdmPush(s){
 
   <button class="btn bg bsm" ${dis} onclick="savePushSettings()">💾 儲存發送設定</button>
 
+  <div style="margin-top:20px;padding-top:16px;border-top:1px dashed var(--border)">
+    <div class="sec" style="margin-top:0">主要群組設定</div>
+    <div id="group-id-current" style="font-size:12px;color:var(--sub);margin-bottom:6px">載入中...</div>
+    <div id="group-id-detected" style="font-size:12px;color:var(--g2);margin-bottom:8px"></div>
+    <button class="btn bg bsm" id="btn-set-detected" ${dis} style="display:none" onclick="setDetectedGroup()">✅ 設定偵測到的群組為主要群組</button>
+    <button class="btn bb bsm" id="push-group-btn" style="margin-top:8px" ${dis} onclick="pushGroupFlex()">📤 立即傳送報名訊息到群組</button>
+  </div>
+
   <div style="margin-top:20px;padding:12px 14px;background:#fff3e0;border-radius:10px;font-size:11px;color:#666;line-height:1.8">
-    <div style="font-weight:900;color:#e65100;margin-bottom:6px">📌 定時發送設定說明</div>
-    定時發送需透過 <b>cron-job.org</b> 設定排程：<br>
-    1. 前往 <b>https://cron-job.org</b> 註冊免費帳號<br>
-    2. 新增 Cronjob，URL 填入：<br>
-    <span style="font-family:monospace;background:#f0f0f0;padding:2px 6px;border-radius:4px">https://golf-linebot-4wqe.onrender.com/api/auto-push</span><br>
-    3. 設定執行時間（台灣時間 14:00 = UTC 06:00）<br>
-    4. Method 選 POST
+    <div style="font-weight:900;color:#e65100;margin-bottom:6px">📌 定時發送說明</div>
+    定時發送已透過 <b>GitHub Actions</b> 設定排程，每天台灣時間 <b>14:00</b> 和 <b>18:00</b> 自動執行。<br>
+    若有符合條件的球敘（前N天內），系統自動推送到主要群組。<br>
+    可點【📤 立即傳送】手動測試（按後 disable，重開才能再傳）。
   </div>`;
   el.innerHTML=html;
 }
@@ -1113,13 +1133,6 @@ function renderAdmAdmins(){
   });
   html+=`<button class="btn bg" style="margin-top:12px" ${dis} onclick="saveAdmins()">💾 儲存管理者名單</button>
   <div style="margin-top:20px;padding-top:16px;border-top:1px dashed var(--border)">
-    <div class="sec" style="margin-top:0">主要群組設定</div>
-    <div id="group-id-current" style="font-size:12px;color:var(--sub);margin-bottom:6px">載入中...</div>
-    <div id="group-id-detected" style="font-size:12px;color:var(--g2);margin-bottom:8px"></div>
-    <button class="btn bg bsm" id="btn-set-detected" ${dis} style="display:none" onclick="setDetectedGroup()">✅ 設定偵測到的群組為主要群組</button>
-    <button class="btn bb bsm" id="push-group-btn" style="margin-top:8px" ${dis} onclick="pushGroupFlex()">📤 傳送報名訊息到群組</button>
-  </div>
-  <div style="margin-top:20px;padding-top:16px;border-top:1px dashed var(--border)">
     <div class="sec" style="margin-top:0">來賓報名開放時間</div>
     <select class="input" id="guest-rule-sel" style="margin-bottom:10px" ${dis}>
       <option value="mon_18">週一 18:00 後</option>
@@ -1137,26 +1150,6 @@ function renderAdmAdmins(){
     </div>
   </div>`;
   el.innerHTML=html;
-  // 載入目前群組 ID 和偵測到的群組 ID
-  apiFetch("/api/admin/get-group-id").then(r=>{
-    const el=document.getElementById("group-id-current");
-    if(el){
-      const name=r.current_name?`「${r.current_name}」`:"";
-      el.textContent=r.group_id ? `目前主要群組：${name} ${r.group_id}` : "尚未設定主要群組";
-    }
-    const det=document.getElementById("group-id-detected");
-    const btn=document.getElementById("btn-set-detected");
-    if(det && r.detected){
-      const dname=r.detected_name?`「${r.detected_name}」`:"";
-      det.textContent=`📍 Webhook 偵測到：${dname} ${r.detected}`;
-      if(btn && r.detected !== r.group_id){
-        btn.style.display="block";
-        btn._detectedId = r.detected;
-      }
-    }else if(det){
-      det.textContent="⚠️ 尚未偵測到群組，請在群組發任意訊息";
-    }
-  }).catch(()=>{});
   // 設定下拉選單當前值
   apiFetch("/api/guest-open-rule").then(r=>{
     const sel=document.getElementById("guest-rule-sel");

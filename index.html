@@ -270,7 +270,7 @@ async function loadRegister(){
   try{
     const[s,r,m,g]=await Promise.all([apiFetch("/api/schedule-public"),apiFetch("/api/registrations-public"),apiFetch("/api/members-public"),apiFetch("/api/guest-open-rule")]);
     scheduleData=s.dates||[];rosterData=r.dates||[];allMembers=m.members||[];guestRule=g.rule||"tue_00";
-    renderRegister();
+    renderRegister(); // allMembers 已載入，紅色顯示可正確判斷
   }catch(e){el.innerHTML='<div class="empty">⚠️ 載入失敗，請重試</div>'}
 }
 
@@ -351,11 +351,11 @@ function renderRegister(){
         return r&&r.players.some(p=>p.name===n&&!p.is_guest);
       }).map(d=>wdn(d.play_date)).join(""); // 候補也顯示已報星期
       const label=days?`${n} (${days})`:n;
-      const isNonMember=allMembers.length>0&&!allMembers.includes(n);
+      const isNonMember=n&&allMembers.length>0&&!allMembers.includes(n);
       const btnStyle=isNonMember
         ?"background:#fdecea;border-color:#e74c3c;color:#c0392b"
         :"background:#e3f2fd;border-color:#90caf9";
-      html+=`<button class="mb" style="${btnStyle}" onclick="showRegModal('${n}',false,${isNonMember})">${label}${isNonMember?' ⚠️':''}</button>`;
+      html+=`<button class="mb" style="${btnStyle}" onclick="showRegModal('${n}',false,${!!isNonMember})">${label}${isNonMember?' ⚠️':''}</button>`;
     });
     html+='</div></div></div>';
   }else{
@@ -686,11 +686,13 @@ function saveMyName(v){S.set("myName",v.trim());if(v.trim())document.getElementB
 async function saveTeam(i,v){
   const name=v.trim();
   if(!name){const t=getTeam();t[i]="";S.set("myTeam",t);renderSettings();return}
-  // 驗證是否在成員名單
+  // 確保成員名單已載入
   if(!allMembers.length){
     try{const r=await apiFetch("/api/members-public");allMembers=r.members||[];}catch(e){}
   }
-  if(allMembers.length && !allMembers.includes(name)){
+  toast(`成員數:${allMembers.length} 名字:${name}`); // debug
+  // 驗證是否在成員名單（名單有資料才驗證）
+  if(allMembers.length>0 && !allMembers.includes(name)){
     // 不在成員名單，詢問是否移到來賓
     if(confirm(`「${name}」不在正式隊員名單\n要幫你移到常用來賓嗎？\n\n[確定]=移到來賓  [取消]=清空此格`)){
       // 找來賓第一個空位

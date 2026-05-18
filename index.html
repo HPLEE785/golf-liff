@@ -351,7 +351,11 @@ function renderRegister(){
         return r&&r.players.some(p=>p.name===n&&!p.is_guest);
       }).map(d=>wdn(d.play_date)).join(""); // 候補也顯示已報星期
       const label=days?`${n} (${days})`:n;
-      html+=`<button class="mb" style="background:#e3f2fd;border-color:#90caf9" onclick="showRegModal('${n}',false)">${label}</button>`;
+      const isNonMember=allMembers.length>0&&!allMembers.includes(n);
+      const btnStyle=isNonMember
+        ?"background:#fdecea;border-color:#e74c3c;color:#c0392b"
+        :"background:#e3f2fd;border-color:#90caf9";
+      html+=`<button class="mb" style="${btnStyle}" onclick="showRegModal('${n}',false,${isNonMember})">${label}${isNonMember?' ⚠️':''}</button>`;
     });
     html+='</div></div></div>';
   }else{
@@ -390,7 +394,27 @@ function quickReg(name,playDate,hasDinner){
   }
 }
 
-function showRegModal(name,isGuest){
+async function checkAndMoveToGuest(name, teamIdx){
+  // 找隊員在 team 的 index（-1 表示不知道）
+  if(confirm(`「${name}」不在正式隊員名單\n要幫你移到常用來賓嗎？\n\n[確定]=移到來賓  [取消]=清空此格`)){
+    const g=getGuests();
+    const idx=g.indexOf("");
+    if(idx>=0){g[idx]=name;S.set("myGuests",g);toast(`✅ 已移到常用來賓第${idx+1}格`)}
+    else{toast("⚠️ 常用來賓已滿（11位）")}
+  }
+  // 不管選哪個，清空隊員格
+  const t=getTeam();
+  // 找到該名字的 index
+  const ti=t.indexOf(name);
+  if(ti>=0){t[ti]="";S.set("myTeam",t);}
+  renderRegister();
+}
+function showRegModal(name,isGuest,isNonMember=false){
+  // 非成員隊員按下報名時提示
+  if(!isGuest && isNonMember){
+    checkAndMoveToGuest(name);
+    return;
+  }
   if(!scheduleData.length){toast("⚠️ 請先載入場次");return}
   let html=`<div class="modal-title">${name}</div><div class="modal-sub">${isGuest?'來賓':'隊員'} · 選擇場次</div>`;
   for(const d of scheduleData){
@@ -659,7 +683,27 @@ function renderSettings(){
 }
 function setFontSize(v){S.set("fontSize",Number(v));applyFontSize();renderSettings();toast("✅ 字體已更新")}
 function saveMyName(v){S.set("myName",v.trim());if(v.trim())document.getElementById("nav-title").textContent="⛳ "+v.trim();toast("✅ 已儲存")}
-function saveTeam(i,v){const t=getTeam();t[i]=v.trim();S.set("myTeam",t);toast("✅ 已儲存");renderSettings()}
+async function saveTeam(i,v){
+  const name=v.trim();
+  if(!name){const t=getTeam();t[i]="";S.set("myTeam",t);renderSettings();return}
+  // 驗證是否在成員名單
+  if(!allMembers.length){
+    try{const r=await apiFetch("/api/members-public");allMembers=r.members||[];}catch(e){}
+  }
+  if(allMembers.length && !allMembers.includes(name)){
+    // 不在成員名單，詢問是否移到來賓
+    if(confirm(`「${name}」不在正式隊員名單\n要幫你移到常用來賓嗎？\n\n[確定]=移到來賓  [取消]=清空此格`)){
+      // 找來賓第一個空位
+      const g=getGuests();
+      const idx=g.indexOf("");
+      if(idx>=0){g[idx]=name;S.set("myGuests",g);toast(`✅ 已移到常用來賓第${idx+1}格`)}
+      else{toast("⚠️ 常用來賓已滿（11位）")}
+    }
+    // 不管選哪個，隊員格清空
+    const t=getTeam();t[i]="";S.set("myTeam",t);renderSettings();return;
+  }
+  const t=getTeam();t[i]=name;S.set("myTeam",t);toast("✅ 已儲存");renderSettings();
+}
 function clearTeam(i){const t=getTeam();t[i]="";S.set("myTeam",t);renderSettings()}
 function saveGuest(i,v){const g=getGuests();g[i]=v.trim();S.set("myGuests",g);toast("✅ 已儲存");renderSettings()}
 function clearGuest(i){const g=getGuests();g[i]="";S.set("myGuests",g);renderSettings()}

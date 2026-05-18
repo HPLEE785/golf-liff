@@ -690,7 +690,6 @@ async function saveTeam(i,v){
   if(!allMembers.length){
     try{const r=await apiFetch("/api/members-public");allMembers=r.members||[];}catch(e){}
   }
-  toast(`成員數:${allMembers.length} 名字:${name}`); // debug
   // 驗證是否在成員名單（名單有資料才驗證）
   if(allMembers.length>0 && !allMembers.includes(name)){
     // 不在成員名單，詢問是否移到來賓
@@ -1140,6 +1139,13 @@ async function submitEditTee(playDate){
 async function deleteTee(playDate){
   // STEP 1
   if(!confirm(`確定刪除 ${mmdd(playDate)} 星期${wdn(playDate)} 的球敘？`))return;
+  // 若場次未過期且有人報名，額外確認
+  if(!isExpired(playDate)){
+    const teeData=teeTimes.find(t=>t.play_date===playDate);
+    if(teeData && teeData.registered>0){
+      if(!confirm(`你要刪除的場次目前有 ${teeData.registered} 人報名了，確定刪除？`))return;
+    }
+  }
   // STEP 2
   const writeIn = confirm(`要把此次球敘名單寫入季統計嗎？\n\n[確定] = 寫入後刪除\n[取消] = 不寫入`);
   if(!writeIn){

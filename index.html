@@ -588,7 +588,11 @@ async function adminCancelPlayer(name, playDate, isGuest, regId){
         const ps=await apiFetch("/api/admin/get-push-settings");
         if(ps.push_on_cancel){
           if(confirm(`「${name}」已取消報名
-是否發送取消通知到群組？`)){
+是否發送取消通知到群組？
+
+⚠️ 注意：每次發送會減少本月200則次數
+若有多人取消，建議最後一位再送，
+或在群組按 @0 / 刷新 即可`)){
             await apiFetch("/api/admin/push-group-flex",{method:"POST",body:JSON.stringify({operator:myName})});
             toast("✅ 通知已發送");
           }
@@ -604,6 +608,14 @@ async function adminCancelPlayer(name, playDate, isGuest, regId){
 async function loadRoster(){
   const el=document.getElementById("roster-content");
   el.innerHTML='<div class="loading"><div class="spinner"></div>載入中...</div>';
+  // 若管理員身份尚未檢查，先查一次
+  if(!adminChecked){
+    try{
+      const res=await apiFetch("/api/admin/check",{method:"POST",body:JSON.stringify({name:normName(getMyName()),code:""})});
+      isAdmin=res.is_admin||false;
+    }catch(e){isAdmin=false;}
+    adminChecked=true;
+  }
   try{
     const[s,r]=await Promise.all([apiFetch("/api/schedule-public"),apiFetch("/api/registrations-public")]);
     scheduleData=s.dates||[];rosterData=r.dates||[];renderRoster();

@@ -590,10 +590,10 @@ async function adminCancelPlayer(name, playDate, isGuest, regId){
           if(confirm(`「${name}」已取消報名
 是否發送取消通知到群組？
 
-⚠️ 注意：每次發送會減少本月200則次數
+⚠️ 注意：發送會減少自動發訊息一次（每月200次限制）
 若有多人取消，建議最後一位再送，
 或在群組按 @0 / 刷新 即可`)){
-            await apiFetch("/api/admin/push-group-flex",{method:"POST",body:JSON.stringify({operator:myName})});
+            await apiFetch("/api/admin/push-group-flex",{method:"POST",body:JSON.stringify({operator:myName,reason:"cancel"})});
             toast("✅ 通知已發送");
           }
         }

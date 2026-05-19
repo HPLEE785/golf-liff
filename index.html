@@ -217,7 +217,7 @@ const getTeam=()=>S.get("myTeam")||Array(7).fill("");
 const getGuests=()=>S.get("myGuests")||Array(11).fill("");
 let scheduleData=[],rosterData=[],allMembers=[];
 let isAdmin=false,adminChecked=false,logDays=7,logSearch="",allLogs=[],adminsData=[];
-let teeTimes=[],schedulable=[],calYear=0,calMonth=0,calSelDate="",guestRule="tue_00";
+let teeTimes=[],schedulable=[],calYear=0,calMonth=0,calSelDate="",guestRule="tue_00",rosterEditMode=false;
 
 function wdn(ds){const d=new Date(ds+"T00:00:00");return WD[d.getDay()===0?6:d.getDay()-1]}
 function mmdd(ds){const[,m,d]=ds.split("-");return m+"/"+d}
@@ -558,6 +558,48 @@ function currentQuarterRange(){
 }
 function quarterLabel(year,q){return `${year}年第${q}季`}
 
+// ══ 管理員名單編輯 ══
+function adminEditPlayer(name, playDate, isGuest, regId, dinnerType, hasDinner){
+  let html=`<div class="modal-title">管理員編輯</div>
+  <div class="modal-sub">${name} ── ${mmdd(playDate)} 星期${wdn(playDate)}</div>
+  <div style="margin-bottom:12px">${dtags(dinnerType,hasDinner)||'<span class="tag t-g">打球</span>'}</div>`;
+  if(hasDinner){
+    html+=`<div class="sec" style="margin-top:0">修改餐敘選項</div><div class="dc">
+    <button class="btn bb bsm" onclick="doReg('${name}','${playDate}','both',${isGuest});closeModal()">⛳🍽️ 打球＋餐敘</button>
+    <button class="btn bg bsm" onclick="doReg('${name}','${playDate}','golf_only',${isGuest});closeModal()">⛳ 打球不餐敘</button>
+    <button class="btn bp bsm" onclick="doReg('${name}','${playDate}','dinner_only',${isGuest});closeModal()">🍽️ 餐敘不打球</button>
+    </div><div style="margin-top:10px">`;
+  }else html+='<div>';
+  html+=`<button class="btn br bsm" onclick="adminCancelPlayer('${name}','${playDate}',${isGuest},'${regId}');closeModal()">✖ 取消此人報名</button></div>`;
+  openModal(html);
+}
+
+async function adminCancelPlayer(name, playDate, isGuest, regId){
+  const myName=getMyName();
+  toast("取消中...");
+  try{
+    const res=await apiFetch("/api/cancel-by-name",{method:"POST",body:JSON.stringify({
+      name, play_date:playDate, is_guest:isGuest, reg_id:regId, operator:myName
+    })});
+    if(res.status==="cancelled"||res.status==="success"){
+      toast(`✅ ${name} 已取消`);
+      // 若「偵測有人取消」已啟用，詢問是否發通知
+      try{
+        const ps=await apiFetch("/api/admin/get-push-settings");
+        if(ps.push_on_cancel){
+          if(confirm(`「${name}」已取消報名
+是否發送取消通知到群組？`)){
+            await apiFetch("/api/admin/push-group-flex",{method:"POST",body:JSON.stringify({operator:myName})});
+            toast("✅ 通知已發送");
+          }
+        }
+      }catch(e){}
+      const[s,r]=await Promise.all([apiFetch("/api/schedule-public"),apiFetch("/api/registrations-public")]);
+      scheduleData=s.dates||[];rosterData=r.dates||[];renderRoster();
+    }else toast("⚠️ "+res.status);
+  }catch(e){toast("❌ 取消失敗")}
+}
+
 // ══ 名單頁 ══
 async function loadRoster(){
   const el=document.getElementById("roster-content");
@@ -606,8 +648,15 @@ function renderRoster(){
   const el=document.getElementById("roster-content");
   if(!scheduleData.length){el.innerHTML='<div class="empty"><div style="font-size:40px;margin-bottom:10px">📋</div>本週尚無場次</div>';return}
   const myName=getMyName();
-  let html=`<div style="margin-bottom:10px">
+  const editDisabled = !isAdmin ? "disabled" : "";
+  let html=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
     <button class="tee-btn edit" onclick="copyRoster()" style="font-size:13px;padding:8px 14px">📋 複製名單</button>
+    <label style="display:flex;align-items:center;gap:6px;cursor:${isAdmin?'pointer':'not-allowed'};opacity:${isAdmin?1:0.4}">
+      <input type="checkbox" id="roster-edit-cb" ${editDisabled} ${rosterEditMode?'checked':''}
+        onchange="rosterEditMode=this.checked;renderRoster()"
+        style="width:18px;height:18px">
+      <span style="font-weight:900;color:${isAdmin?'var(--g2)':'var(--muted)'}">✏️ 編輯（管理員）</span>
+    </label>
   </div>`;
   for(const sched of scheduleData){
     const d=rosterData.find(r=>r.play_date===sched.play_date)||{play_date:sched.play_date,has_dinner:sched.has_dinner,players:[]};
@@ -628,9 +677,9 @@ function renderRoster(){
       </div>
     </div>
     <div class="card-body"><div>
-    ${reg.map((p,i)=>`<div class="pr">
+    ${reg.map((p,i)=>`<div class="pr" ${rosterEditMode?`onclick="adminEditPlayer('${p.name}','${sched.play_date}',${p.is_guest},'${p.reg_id||''}','${p.dinner_type||''}',${sched.has_dinner})" style="cursor:pointer;background:${i%2===0?'#fffde7':'#fff8e1'}"`:''}>
       <div class="pn r">${i+1}</div>
-      <div class="pname">${p.is_guest?p.name+' / 來賓 / '+(p.invited_by||'?'):p.name}</div>
+      <div class="pname">${p.is_guest?p.name+' / 來賓 / '+(p.invited_by||'?'):p.name}${rosterEditMode?' ✎':''}</div>
       <div class="ptags">${dtags(p.dinner_type,sched.has_dinner)}</div>
     </div>`).join("")}
     ${wl.length?'<div style="font-size:11px;font-weight:900;color:var(--muted);margin:8px 0 4px">候補</div>':''}

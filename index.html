@@ -1366,8 +1366,9 @@ function renderAdmMembers(){
     <button class="tee-btn edit" ${dis} onclick="addMemberPrompt()">＋ 新增成員</button>
     <button class="tee-btn edit" onclick="copyAllMembers()">📋 全部複製</button>
     <button class="tee-btn edit" ${dis} onclick="pasteMembers()">📥 從剪貼簿貼上</button>
-    <button class="tee-btn del" ${dis} onclick="clearAllMembers()">🗑️ 全部清空</button>
+    <button class="tee-btn del" ${dis} onclick="clearAllMembers()">🗑️ 清空成員</button>
     <button class="tee-btn edit" onclick="showMemberRangePicker()">📅 設定區間</button>
+    <button class="tee-btn del" onclick="clearRangeStats()">🗑️ 清區間數</button>
   </div>
   <div style="font-size:11px;color:var(--muted);margin-bottom:6px">共 ${membersData.length} 位成員　區間：${memberRangeLabel}</div>
   <div style="display:grid;grid-template-columns:28px 1fr 44px 44px 28px;gap:4px;margin-bottom:6px;font-size:11px;font-weight:900;color:var(--muted);padding:0 4px">
@@ -1420,6 +1421,25 @@ function showMemberRangePicker(){
   }
   const optHtml=options.map((o,i)=>`<button class="btn bsm" style="margin-bottom:6px;${i===0?'background:var(--g2);color:#fff':''}" onclick="setMemberRange(${o.value.replace(/"/g,"'")}, '${o.label}')">${o.label}</button>`).join("");
   openModal(`<div class="modal-title">選擇統計區間</div><div class="modal-sub">成員頁顯示的參加次數區間</div>${optHtml}`);
+}
+async function clearRangeStats(){
+  const memberRange=S.get("memberRange")||currentQuarterRange();
+  const memberRangeLabel=S.get("memberRangeLabel")||"本季";
+  if(!confirm(`確認清空所有成員在此區間參加與取消次數？
+
+區間：${memberRangeLabel}
+（${memberRange.start} ~ ${memberRange.end}）
+
+此操作會清除 seasonal_records 和 action_logs 的取消記錄`))return;
+  try{
+    await apiFetch("/api/admin/clear-range-stats",{method:"POST",body:JSON.stringify({
+      operator:getMyName(),
+      start:memberRange.start,
+      end:memberRange.end
+    })});
+    toast("✅ 已清除區間統計資料");
+    loadAdmMembers();
+  }catch(e){toast("❌ 清除失敗")}
 }
 function setMemberRange(range, label){
   S.set("memberRange", range);

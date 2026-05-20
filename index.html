@@ -1370,31 +1370,41 @@ function renderAdmMembers(){
     <button class="tee-btn edit" onclick="showMemberRangePicker()">📅 設定區間</button>
   </div>
   <div style="font-size:11px;color:var(--muted);margin-bottom:6px">共 ${membersData.length} 位成員　區間：${memberRangeLabel}</div>
-  <div style="display:grid;grid-template-columns:28px 1fr 44px 28px;gap:4px;margin-bottom:6px;font-size:11px;font-weight:900;color:var(--muted);padding:0 4px">
-    <div></div><div>姓名</div><div style="text-align:center">次數</div><div></div>
+  <div style="display:grid;grid-template-columns:28px 1fr 44px 44px 28px;gap:4px;margin-bottom:6px;font-size:11px;font-weight:900;color:var(--muted);padding:0 4px">
+    <div></div><div>姓名</div><div style="text-align:center">參加次</div><div style="text-align:center">取消次</div><div></div>
   </div>`;
   membersData.forEach((m,i)=>{
-    html+=`<div style="display:flex;align-items:center;margin-bottom:6px;gap:4px">
+    html+=`<div style="display:grid;grid-template-columns:28px 1fr 44px 44px 28px;gap:4px;align-items:center;margin-bottom:6px">
       <div class="snum" style="flex-shrink:0">${i+1}</div>
       <input class="sinput" style="background:#e3f2fd;flex:1;min-width:0" value="${m.display_name}" ${dis}
         onchange="updateMemberName('${m.id}','${m.display_name}',this.value)">
-      <div class="member-count" data-name="${m.display_name}" style="background:#d8f3dc;min-width:44px;text-align:center;font-weight:900;color:var(--g2);padding:12px 4px;border-radius:8px;flex-shrink:0">…</div>
+      <div class="member-count" data-name="${m.display_name}" style="background:#d8f3dc;min-width:44px;text-align:center;font-weight:900;color:var(--g2);padding:8px 2px;border-radius:8px">…</div>
+      <div class="member-cancel" data-name="${m.display_name}" style="background:#fdecea;min-width:44px;text-align:center;font-weight:900;color:var(--r1);padding:8px 2px;border-radius:8px">…</div>
       <button class="sclear" style="flex-shrink:0" ${dis} onclick="deleteMember('${m.id}','${m.display_name}')">×</button>
     </div>`;
   });
   el.innerHTML=html;
-  // DOM 就緒後載入區間次數（setTimeout 確保 DOM 完全渲染）
+  // DOM 就緒後載入區間次數（參加+取消）
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
-  apiFetch(`/api/stats-range?start=${memberRange.start}&end=${memberRange.end}`).then(r=>{
-    const countMap={};
-    (r.players||[]).forEach(p=>countMap[p.name]=p.count);
-    document.querySelectorAll(".member-count").forEach(c=>{
-      const name=c.dataset.name;
-      c.textContent=countMap[name]!==undefined?countMap[name]:0;
+    Promise.all([
+      apiFetch(`/api/stats-range?start=${memberRange.start}&end=${memberRange.end}`),
+      apiFetch(`/api/cancel-stats?start=${memberRange.start}&end=${memberRange.end}`)
+    ]).then(([sr, cr])=>{
+      const countMap={};
+      (sr.players||[]).forEach(p=>countMap[p.name]=p.count);
+      const cancelMap=cr.cancel_map||{};
+      document.querySelectorAll(".member-count").forEach(c=>{
+        const name=c.dataset.name;
+        c.textContent=countMap[name]!==undefined?countMap[name]:0;
+      });
+      document.querySelectorAll(".member-cancel").forEach(c=>{
+        const name=c.dataset.name;
+        c.textContent=cancelMap[name]!==undefined?cancelMap[name]:0;
+      });
+    }).catch(()=>{
+      document.querySelectorAll(".member-count").forEach(c=>c.textContent="-");
+      document.querySelectorAll(".member-cancel").forEach(c=>c.textContent="-");
     });
-  }).catch(()=>{
-    document.querySelectorAll(".member-count").forEach(c=>c.textContent="-");
-  });
   })); // double rAF 確保 DOM 就緒
 }
 

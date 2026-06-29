@@ -905,6 +905,12 @@ function renderAdmPush(s){
       <button class="btn bg bsm" style="width:auto;padding:7px 14px" ${dis} onclick="saveRosterFontSize()">💾 儲存字體設定</button>
     </div>
   </div>
+  <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:12px;background:#fff3e0;border:1.5px solid #e65100;border-radius:10px;padding:10px 14px">
+    <input type="checkbox" id="show-refresh-btn" ${s.show_refresh_btn?'checked':''} ${dis}
+      style="width:18px;height:18px">
+    <span style="font-weight:700">群組訊息卡片顯示 🔄 刷新按鈕</span>
+    <button class="btn bg bsm" style="width:auto;padding:7px 14px;margin-left:auto" ${dis} onclick="saveRefreshBtnSetting()">💾 儲存</button>
+  </label>
   <div style="background:#f0fff4;border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:8px">
     <span style="font-weight:900">本月累計自動發送：</span>
     <span style="font-weight:900;${countColor}">${s.push_count} 則</span>
@@ -965,6 +971,23 @@ function renderAdmPush(s){
   el.innerHTML=html;
 }
 
+async function saveRefreshBtnSetting(){
+  if(!isAdmin){toast("⚠️ 非管理者");return}
+  const checked=document.getElementById("show-refresh-btn")?.checked||false;
+  try{
+    const s=await apiFetch("/api/admin/get-push-settings");
+    await apiFetch("/api/admin/save-push-settings",{method:"POST",body:JSON.stringify({
+      operator:getMyName(),
+      times:s.times,
+      days:s.days,
+      push_on_full:s.push_on_full,
+      push_on_cancel:s.push_on_cancel,
+      roster_font_size:s.roster_font_size,
+      show_refresh_btn:checked
+    })});
+    toast(checked?"✅ 刷新按鈕已開啟":"✅ 刷新按鈕已隱藏");
+  }catch(e){toast("❌ 儲存失敗")}
+}
 async function saveRosterFontSize(){
   if(!isAdmin){toast("⚠️ 非管理者");return}
   const sel=document.getElementById("roster-font-size");

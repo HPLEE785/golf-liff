@@ -697,7 +697,7 @@ function renderRoster(){
     ${reg.map((p,i)=>`<div class="pr" ${rosterEditMode?`onclick="adminEditPlayer('${p.name}','${sched.play_date}',${p.is_guest},'${p.reg_id||''}','${p.dinner_type||''}',${sched.has_dinner})" style="cursor:pointer;background:${i%2===0?'#fffde7':'#fff8e1'}"`:''}>
       <div class="pn r">${i+1}</div>
       <div class="pname">${p.is_guest?p.name+' / 來賓 / '+(p.invited_by||'?'):p.name}${rosterEditMode?' ✎':''}</div>
-      <div class="ptags">${dtags(p.dinner_type,sched.has_dinner)}</div>
+      <div class="ptags">${rosterEditMode?dtagsEdit(p.dinner_type,sched.has_dinner):dtags(p.dinner_type,sched.has_dinner)}</div>
     </div>`).join("")}
     ${wl.length?'<div style="font-size:11px;font-weight:900;color:var(--muted);margin:8px 0 4px">候補</div>':''}
     ${wl.map((p,i)=>`<div class="pr"><div class="pn w">W${i+1}</div><div class="pname">${p.name}</div><div class="ptags"><span class="tag t-wl">候補</span></div></div>`).join("")}

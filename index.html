@@ -90,7 +90,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
 .modal-title{font-size:calc(16px + var(--fs));font-weight:900;margin-bottom:4px}
 .modal-sub{font-size:calc(12px + var(--fs));color:var(--sub);margin-bottom:16px}
 .modal-close{float:right;background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer;margin-top:-4px}
-.srow{display:flex;align-items:center;background:var(--card);border-radius:var(--rsm);margin-bottom:8px;overflow:hidden;box-shadow:var(--shadow)}
+.srow{display:flex;align-items:center;background:var(--card);border-radius:var(--rsm);margin-bottom:8px;overflow:visible;box-shadow:var(--shadow)}
 .snum{width:36px;text-align:center;font-size:calc(12px + var(--fs));font-weight:900;color:var(--muted);flex-shrink:0}
 .sinput{flex:1;padding:12px 8px;border:none;outline:none;font-size:calc(14px + var(--fs));font-family:var(--font);font-weight:500}
 .sinput:disabled{background:#f5f5f5;color:var(--muted)}
@@ -726,7 +726,9 @@ function renderRoster(){
 
 // ══ 設定頁 ══
 function renderSettings(){
-  const myName=getMyName(),team=getTeam(),guests=getGuests();
+  const myName=getMyName(),team=getTeam();
+  const allGuests=getGuests(); // 原始20格（含空白）
+  const guests=allGuests.filter(Boolean); // 有名字的（報名頁用）
   const fs=S.get("fontSize")||0;
   const hideBar=S.get("hideSeasonBar")||false;
   let html=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
@@ -756,11 +758,11 @@ function renderSettings(){
   html+=`<datalist id="ml">${allMembers.map(m=>`<option value="${m}">`).join('')}</datalist>
   <div class="sec">常用來賓（最多20人）</div>`;
   const guestChecks=getGuestChecks();
-  guests.forEach((n,i)=>{
+  allGuests.forEach((n,i)=>{
     const chk=guestChecks[i]||false;
-    html+=`<div class="srow" style="background:#d8f3dc;align-items:center"><div class="snum">${i+1}</div>
+    html+=`<div class="srow" style="background:#d8f3dc;overflow:visible"><div class="snum">${i+1}</div>
     <input class="sinput" style="background:#d8f3dc;flex:1" placeholder="來賓${i+1}姓名" autocomplete="new-password" value="${n}" onchange="saveGuest(${i},this.value)">
-    <label style="display:flex;align-items:center;gap:4px;padding:0 8px;cursor:pointer;white-space:nowrap;font-size:calc(12px + var(--fs))">
+    <label style="display:flex;align-items:center;gap:4px;padding:0 8px;cursor:pointer;white-space:nowrap;font-size:calc(12px + var(--fs));flex-shrink:0">
       <input type="checkbox" ${chk?'checked':''} onchange="saveGuestCheck(${i},this.checked)" style="width:16px;height:16px">需卷
     </label>
     ${n?`<button class="sclear" onclick="clearGuest(${i})">×</button>`:''}</div>`;

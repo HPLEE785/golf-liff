@@ -218,8 +218,8 @@ function cleanGuestName(s){
   return (s||"").replace(/[\/\\,，:：;；、。．\s]/g,"").replace(/來賓|需卷/g,"").trim();
 }
 const getTeam=()=>S.get("myTeam")||Array(7).fill("");
-const getGuests=()=>S.get("myGuests")||Array(20).fill("");
-const getGuestChecks=()=>S.get("myGuestChecks")||Array(20).fill(false);
+const getGuests=()=>{const g=S.get("myGuests")||[];while(g.length<20)g.push("");return g;};
+const getGuestChecks=()=>{const g=S.get("myGuestChecks")||[];while(g.length<20)g.push(false);return g;};
 let scheduleData=[],rosterData=[],allMembers=[],lineDisplayName="";
 let isAdmin=false,adminChecked=false,logDays=7,logSearch="",allLogs=[],adminsData=[];
 let teeTimes=[],schedulable=[],calYear=0,calMonth=0,calSelDate="",guestRule="tue_00",rosterEditMode=false;
@@ -761,7 +761,7 @@ function renderSettings(){
   allGuests.forEach((n,i)=>{
     const chk=guestChecks[i]||false;
     html+=`<div class="srow" style="background:#d8f3dc;overflow:visible"><div class="snum">${i+1}</div>
-    <input class="sinput" style="background:#d8f3dc;flex:1" placeholder="來賓${i+1}姓名" autocomplete="new-password" value="${n}" onchange="saveGuest(${i},this.value)">
+    <input class="sinput" style="background:#d8f3dc;flex:1;min-width:0;max-width:calc(100% - 90px)" placeholder="來賓${i+1}姓名" autocomplete="new-password" value="${n}" onchange="saveGuest(${i},this.value)">
     <label style="display:flex;align-items:center;gap:4px;padding:0 8px;cursor:pointer;white-space:nowrap;font-size:calc(12px + var(--fs));flex-shrink:0">
       <input type="checkbox" ${chk?'checked':''} onchange="saveGuestCheck(${i},this.checked)" style="width:18px;height:18px;-webkit-appearance:checkbox;appearance:checkbox;flex-shrink:0">需卷
     </label>

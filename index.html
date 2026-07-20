@@ -763,7 +763,7 @@ function renderSettings(){
     html+=`<div class="srow" style="background:#d8f3dc;overflow:visible"><div class="snum">${i+1}</div>
     <input class="sinput" style="background:#d8f3dc;flex:1" placeholder="來賓${i+1}姓名" autocomplete="new-password" value="${n}" onchange="saveGuest(${i},this.value)">
     <label style="display:flex;align-items:center;gap:4px;padding:0 8px;cursor:pointer;white-space:nowrap;font-size:calc(12px + var(--fs));flex-shrink:0">
-      <input type="checkbox" ${chk?'checked':''} onchange="saveGuestCheck(${i},this.checked)" style="width:16px;height:16px">需卷
+      <input type="checkbox" ${chk?'checked':''} onchange="saveGuestCheck(${i},this.checked)" style="width:18px;height:18px;-webkit-appearance:checkbox;appearance:checkbox;flex-shrink:0">需卷
     </label>
     ${n?`<button class="sclear" onclick="clearGuest(${i})">×</button>`:''}</div>`;
   });

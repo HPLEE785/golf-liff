@@ -213,9 +213,14 @@ function applyFontSize(){
 applyFontSize();
 const getMyName=()=>S.get("myName")||"";
 const normName=s=>(s||"").replace(/\s+/g,"").toUpperCase();
+// 清理來賓人名：移除 / \ , : ; 及全形同類字元，只保留純名字
+function cleanGuestName(s){
+  return (s||"").replace(/[\/\\,，:：;；、。．\s]/g,"").replace(/來賓|需卷/g,"").trim();
+}
 const getTeam=()=>S.get("myTeam")||Array(7).fill("");
-const getGuests=()=>S.get("myGuests")||Array(11).fill("");
-let scheduleData=[],rosterData=[],allMembers=[];
+const getGuests=()=>S.get("myGuests")||Array(20).fill("");
+const getGuestChecks=()=>S.get("myGuestChecks")||Array(20).fill(false);
+let scheduleData=[],rosterData=[],allMembers=[],lineDisplayName="";
 let isAdmin=false,adminChecked=false,logDays=7,logSearch="",allLogs=[],adminsData=[];
 let teeTimes=[],schedulable=[],calYear=0,calMonth=0,calSelDate="",guestRule="tue_00",rosterEditMode=false;
 
@@ -370,13 +375,15 @@ function renderRegister(){
   if(!guestOk){html+=`<div class="card"><div class="card-body" style="text-align:center;padding:16px">⏰ ${guestRuleLabel} 開放來賓報名</div></div>`}
   else if(guests.length){
     html+='<div style="border:1.5px solid #95d5b2;border-radius:12px;background:#d8f3dc;padding:6px 8px;margin-bottom:10px"><div style="display:flex;flex-wrap:wrap;gap:4px">';
-    guests.forEach(n=>{
+    const guestChecksReg=getGuestChecks();
+    guests.forEach((n,gi)=>{
       const days=scheduleData.filter(d=>{
         const r=rosterData.find(x=>x.play_date===d.play_date);
         return r&&r.players.some(p=>p.name===n);
       }).map(d=>wdn(d.play_date)).join("");
-      const label=days?`${n} (${days})`:n;
-      html+=`<button style="background:#fff;border-color:#95d5b2;color:var(--ink);padding:5px 8px;border-radius:8px;border:1.5px solid;font-size:calc(13px + var(--fs));font-weight:700;cursor:pointer" onclick="showRegModal('${n}',true)">${label}</button>`;
+      const needScroll=guestChecksReg[gi]||false;
+      const label=days?`${n}${needScroll?' 📜':''}  (${days})`:n+(needScroll?' 📜':'');
+      html+=`<button style="background:#fff;border-color:#95d5b2;color:var(--ink);padding:5px 8px;border-radius:8px;border:1.5px solid;font-size:calc(13px + var(--fs));font-weight:700;cursor:pointer" onclick="showRegModal('${n}',true,false,${gi})">${label}</button>`;
     });
     html+='</div></div>';
   }else{html+='<div class="card"><div class="card-body" style="text-align:center;padding:16px">若要幫來賓報名，需到「⚙️ 我的」頁面建立【常用來賓】名單方可替來賓報名</div></div>'}
@@ -414,7 +421,7 @@ async function checkAndMoveToGuest(name, teamIdx){
   if(ti>=0){t[ti]="";S.set("myTeam",t);}
   renderRegister();
 }
-function showRegModal(name,isGuest,isNonMember=false){
+function showRegModal(name,isGuest,isNonMember=false,guestIdx=-1){
   // 非成員隊員按下報名時提示
   if(!isGuest && isNonMember){
     checkAndMoveToGuest(name);
@@ -442,7 +449,9 @@ function showRegModal(name,isGuest,isNonMember=false){
     }else if(d.has_dinner){
       html+=`<div class="dc"><button class="btn bb bsm" onclick="doReg('${name}','${d.play_date}','both',${isGuest});closeModal()">⛳🍽️ 打球＋餐敘</button><button class="btn bg bsm" onclick="doReg('${name}','${d.play_date}','golf_only',${isGuest});closeModal()">⛳ 打球不餐敘</button><button class="btn bp bsm" onclick="doReg('${name}','${d.play_date}','dinner_only',${isGuest});closeModal()">🍽️ 餐敘不打球</button></div>`;
     }else{
-      html+=`<button class="btn bg bsm" onclick="doReg('${name}','${d.play_date}','',${isGuest});closeModal()">✅ 報名</button>`;
+      const _needScroll=(isGuest&&guestIdx>=0)?(getGuestChecks()[guestIdx]||false):false;
+      const _scrollSuffix=_needScroll?",true":"";
+      html+=`<button class="btn bg bsm" onclick="doReg('${name}','${d.play_date}','',${isGuest}${_needScroll?',true':''});closeModal()">✅ 報名${_needScroll?' (需卷)':''}</button>`;
     }
     html+='</div></div>';
   }
@@ -462,10 +471,19 @@ function showEditModal(name,playDate,isGuest,regId,dinnerType,hasDinner){
   openModal(html);
 }
 
-async function doReg(name,playDate,dinnerType,isGuest){
-  const myName=getMyName();toast("報名中...");
+async function doReg(name,playDate,dinnerType,isGuest,needScroll=false){
+  const myName=getMyName();
+  // 驗證操作者（我的名字）必須在成員名單
+  if(!myName){toast("⚠️ 請先在「⚙️ 我的」設定您的名字");return}
+  if(allMembers.length>0 && !allMembers.includes(myName)){
+    toast("⚠️ 您的名字不在有效隊員名單，無法報名，請詢問管理員",4000);return;
+  }
+  toast("報名中...");
+  // 需卷備註加到來賓名字後面（只有來賓）
+  const guestNote=isGuest&&needScroll?"/需卷":"";
+  const regName=isGuest?(name+guestNote):name;
   try{
-    const res=await apiFetch("/api/register-by-name",{method:"POST",body:JSON.stringify({name,play_date:playDate,dinner_type:dinnerType,operator:myName||name,is_guest:isGuest,invited_by:myName||""})});
+    const res=await apiFetch("/api/register-by-name",{method:"POST",body:JSON.stringify({name:regName,play_date:playDate,dinner_type:dinnerType,operator:myName||name,is_guest:isGuest,invited_by:myName||"",line_display_name:lineDisplayName})});
     if(res.status==="success")toast(res.info?.is_waitlist?`✅ ${name} 加入候補`:`✅ ${name} 報名成功`);
     else if(res.status==="already_registered")toast(`⚠️ ${name} 已報名此場次`);
     else if(res.status==="member_not_found")toast(`⚠️ 找不到成員「${name}」`);
@@ -477,7 +495,7 @@ async function doReg(name,playDate,dinnerType,isGuest){
 async function doCancel(name,playDate,isGuest,regId){
   const myName=getMyName();toast("取消中...");
   try{
-    const res=await apiFetch("/api/cancel-by-name",{method:"POST",body:JSON.stringify({name,play_date:playDate,is_guest:isGuest,reg_id:regId,operator:myName||name})});
+    const res=await apiFetch("/api/cancel-by-name",{method:"POST",body:JSON.stringify({name,play_date:playDate,is_guest:isGuest,reg_id:regId,operator:myName||name,line_display_name:lineDisplayName})});
     toast(res.status==="cancelled"||res.status==="success"?`✅ ${name} 取消成功`:"⚠️ "+res.status);
     await reloadData();renderRegister();
   }catch(e){toast("❌ 取消失敗")}
@@ -700,7 +718,7 @@ function renderRoster(){
       <div class="ptags">${rosterEditMode?dtagsEdit(p.dinner_type,sched.has_dinner):dtags(p.dinner_type,sched.has_dinner)}</div>
     </div>`).join("")}
     ${wl.length?'<div style="font-size:11px;font-weight:900;color:var(--muted);margin:8px 0 4px">候補</div>':''}
-    ${wl.map((p,i)=>`<div class="pr"><div class="pn w">W${i+1}</div><div class="pname">${p.name}</div><div class="ptags"><span class="tag t-wl">候補</span></div></div>`).join("")}
+    ${wl.map((p,i)=>`<div class="pr"><div class="pn w">W${i+1}</div><div class="pname">${p.is_guest?p.name+' / 來賓 / '+(p.invited_by||'?'):p.name}</div><div class="ptags"><span class="tag t-wl">候補</span></div></div>`).join("")}
     </div></div></div>`;
   }
   el.innerHTML=html;
@@ -736,10 +754,15 @@ function renderSettings(){
     ${n?`<button class="sclear" onclick="clearTeam(${i})">×</button>`:''}</div>`;
   });
   html+=`<datalist id="ml">${allMembers.map(m=>`<option value="${m}">`).join('')}</datalist>
-  <div class="sec">常用來賓（最多11人）</div>`;
+  <div class="sec">常用來賓（最多20人）</div>`;
+  const guestChecks=getGuestChecks();
   guests.forEach((n,i)=>{
-    html+=`<div class="srow" style="background:#d8f3dc"><div class="snum">${i+1}</div>
-    <input class="sinput" style="background:#d8f3dc" placeholder="來賓${i+1}姓名" autocomplete="new-password" value="${n}" onchange="saveGuest(${i},this.value)">
+    const chk=guestChecks[i]||false;
+    html+=`<div class="srow" style="background:#d8f3dc;align-items:center"><div class="snum">${i+1}</div>
+    <input class="sinput" style="background:#d8f3dc;flex:1" placeholder="來賓${i+1}姓名" autocomplete="new-password" value="${n}" onchange="saveGuest(${i},this.value)">
+    <label style="display:flex;align-items:center;gap:4px;padding:0 8px;cursor:pointer;white-space:nowrap;font-size:calc(12px + var(--fs))">
+      <input type="checkbox" ${chk?'checked':''} onchange="saveGuestCheck(${i},this.checked)" style="width:16px;height:16px">需卷
+    </label>
     ${n?`<button class="sclear" onclick="clearGuest(${i})">×</button>`:''}</div>`;
   });
   html+='<div style="height:24px"></div>';
@@ -748,7 +771,25 @@ function renderSettings(){
   if(!allMembers.length){apiFetch("/api/members-public").then(r=>{allMembers=r.members||[];const dl=document.getElementById("ml");if(dl)dl.innerHTML=allMembers.map(m=>`<option value="${m}">`).join('')}).catch(()=>{})}
 }
 function setFontSize(v){S.set("fontSize",Number(v));applyFontSize();renderSettings();toast("✅ 字體已更新")}
-function saveMyName(v){S.set("myName",v.trim());if(v.trim())document.getElementById("nav-title").textContent="⛳ "+v.trim();toast("✅ 已儲存")}
+async function saveMyName(v){
+  const name=v.trim();
+  S.set("myName",name);
+  if(name) document.getElementById("nav-title").textContent="⛳ "+name;
+  // 驗證是否在成員名單
+  if(name){
+    if(!allMembers.length){
+      try{const r=await apiFetch("/api/members-public");allMembers=r.members||[];}catch(e){}
+    }
+    if(allMembers.length>0 && !allMembers.includes(name)){
+      toast("⚠️ 此名字不在有效隊員名單，請詢問管理員",4000);
+      document.getElementById("myname-label").style.color="var(--r1)";
+      return;
+    }
+  }
+  toast("✅ 已儲存");
+  if(document.getElementById("myname-label"))
+    document.getElementById("myname-label").style.color="var(--sub)";
+}
 async function saveTeam(i,v){
   const name=v.trim();
   if(!name){const t=getTeam();t[i]="";S.set("myTeam",t);renderSettings();return}
@@ -772,7 +813,16 @@ async function saveTeam(i,v){
   const t=getTeam();t[i]=name;S.set("myTeam",t);toast("✅ 已儲存");renderSettings();
 }
 function clearTeam(i){const t=getTeam();t[i]="";S.set("myTeam",t);renderSettings()}
-function saveGuest(i,v){const g=getGuests();g[i]=v.trim();S.set("myGuests",g);toast("✅ 已儲存");renderSettings()}
+function saveGuest(i,v){
+  const cleaned=cleanGuestName(v);
+  const g=getGuests();g[i]=cleaned;S.set("myGuests",g);
+  if(v.trim()!==cleaned && v.trim()) toast(`✅ 已儲存（已清理為：${cleaned||'空白'}）`);
+  else if(cleaned) toast("✅ 已儲存");
+  renderSettings();
+}
+function saveGuestCheck(i,checked){
+  const gc=getGuestChecks();gc[i]=checked;S.set("myGuestChecks",gc);
+}
 function clearGuest(i){const g=getGuests();g[i]="";S.set("myGuests",g);renderSettings()}
 
 // ══ 統計頁 ══
@@ -1666,6 +1716,10 @@ function doLeave(){try{if(typeof liff!=="undefined"&&liff.closeWindow)liff.close
   }
   try{
     await Promise.race([liff.init({liffId:"2009411318-rdNGpvNz"}),new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout")),3000))]);
+    // 取得 LINE 顯示名稱
+    if(liff.isLoggedIn()){
+      try{const profile=await liff.getProfile();lineDisplayName=profile.displayName||"";}catch(e){}
+    }
   }catch(e){console.log("LIFF init:",e.message)}
   // 初始化時抓來賓開放規則
   try{const g=await apiFetch("/api/guest-open-rule");guestRule=g.rule||"tue_00";}catch(e){}

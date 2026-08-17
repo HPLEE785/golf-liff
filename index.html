@@ -1135,6 +1135,7 @@ function renderAdmTee(){
   }
   html+=`<div style="margin-top:20px;padding-top:16px;border-top:1px dashed var(--border)">
     <button class="btn br bsm" ${dis} onclick="clearAllData()">🗑️ 清除全部場次與報名資料</button>
+    <button class="btn bb bsm" style="margin-top:8px" onclick="showHistoryTee()">📚 查看歷史場次（季統計）</button>
   </div>`;
   el.innerHTML=html;
 }
@@ -1317,22 +1318,47 @@ async function deleteTee(playDate){
       if(!confirm(`你要刪除的場次目前有 ${teeData.registered} 人報名了，確定刪除？`))return;
     }
   }
-  // STEP 2
-  const writeIn = confirm(`要把此次球敘名單寫入季統計嗎？\n\n[確定] = 寫入後刪除\n[取消] = 不寫入`);
-  if(!writeIn){
-    // 再次確認不寫入
-    const sure = confirm(`不寫入季統計會導致此次球敘名單\n完全遺失，確定嗎？\n\n[確定] = 直接刪除\n[取消] = 回上一步`);
-    if(!sure){ deleteTee(playDate); return; } // 回 STEP 2
-  }
+  // 強制寫入季統計後刪除
   try{
-    if(writeIn){
-      const wr=await apiFetch("/api/admin/write-seasonal",{method:"POST",body:JSON.stringify({operator:getMyName(),play_date:playDate})});
-      toast(`✅ 已寫入 ${wr.written} 筆季統計`);
-    }
+    toast("寫入季統計中...");
+    const wr=await apiFetch("/api/admin/write-seasonal",{method:"POST",body:JSON.stringify({operator:getMyName(),play_date:playDate})});
     await apiFetch("/api/admin/delete-tee",{method:"POST",body:JSON.stringify({operator:getMyName(),play_date:playDate})});
-    toast("✅ 已刪除");
+    toast(`✅ 已寫入 ${wr.written} 筆季統計並刪除場次`);
     const tee=await apiFetch("/api/admin/tee-times");teeTimes=tee.tee_times||[];renderAdmTee();scheduleData=[];
   }catch(e){toast("❌ 刪除失敗："+e.message)}
+}
+
+// ══ 歷史場次 ══
+async function showHistoryTee(){
+  const now=new Date();
+  const oneYearAgo=new Date(now);
+  oneYearAgo.setFullYear(now.getFullYear()-1);
+  const start=oneYearAgo.toISOString().slice(0,10);
+  const end=now.toISOString().slice(0,10);
+  try{
+    const r=await apiFetch(`/api/stats-range?start=${start}&end=${end}`);
+    const dates=r.dates||[];
+    if(!dates.length){openModal('<div class="modal-title">📚 歷史場次</div><div class="empty">無歷史紀錄</div>');return;}
+    let html='<div class="modal-title">📚 歷史場次（季統計）</div>';
+    html+=`<div class="modal-sub">近一年共 ${dates.length} 場</div>`;
+    html+='<div style="max-height:60vh;overflow-y:auto">';
+    // 依日期分組顯示人數
+    const byDate={};
+    (r.players||[]).forEach(p=>{
+      Object.keys(p.dates).forEach(d=>{
+        byDate[d]=(byDate[d]||0)+1;
+      });
+    });
+    dates.slice().reverse().forEach(d=>{
+      const count=byDate[d]||0;
+      html+=`<div style="padding:8px 0;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between">
+        <span style="font-weight:700">${mmdd(d)} 星期${wdn(d)}</span>
+        <span style="color:var(--g2);font-weight:700">${count} 人</span>
+      </div>`;
+    });
+    html+='</div>';
+    openModal(html);
+  }catch(e){toast("❌ 載入失敗")}
 }
 
 // ══ 管理者設定 ══
